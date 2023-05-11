@@ -52,5 +52,8 @@
     "stream",
     "typescript",
     "esmodules"
-  ]
+  ],
+  "dependencies": {
+    "@hazae41/result": "^1.0.20"
+  }
 }

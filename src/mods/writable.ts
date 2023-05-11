@@ -1,3 +1,7 @@
+import { Result } from "@hazae41/result"
+import { Promiseable } from "libs/promises/promiseable.js"
+import { StreamError } from "./error.js"
+
 export class SuperWritableStream<W> {
 
   readonly sink: SuperUnderlyingSink<W>
@@ -10,7 +14,7 @@ export class SuperWritableStream<W> {
    * @param strategy 
    */
   constructor(
-    readonly subsink: UnderlyingSink<W>,
+    readonly subsink: ResultableUnderlyingSink<W>,
     readonly strategy?: QueuingStrategy<W>
   ) {
     this.sink = new SuperUnderlyingSink(subsink)
@@ -31,12 +35,19 @@ export class SuperWritableStream<W> {
 
 }
 
+export interface ResultableUnderlyingSink<W = any> {
+  abort?: (reason?: any) => Promiseable<Result<void, unknown>>;
+  close?: () => Promiseable<Result<void, unknown>>;
+  start?: (controller: WritableStreamDefaultController) => Promiseable<Result<void, unknown>>;
+  write?: (chunk: W, controller: WritableStreamDefaultController) => Promiseable<Result<void, unknown>>;
+}
+
 export class SuperUnderlyingSink<W> implements UnderlyingSink<W> {
 
   #controller?: WritableStreamDefaultController
 
   constructor(
-    readonly subsink: UnderlyingSink<W>
+    readonly subsink: ResultableUnderlyingSink<W>
   ) { }
 
   get controller() {
@@ -50,15 +61,27 @@ export class SuperUnderlyingSink<W> implements UnderlyingSink<W> {
   }
 
   write(chunk: W, controller: WritableStreamDefaultController) {
-    return this.subsink.write?.(chunk, controller)
+    const promiseable = this.subsink.write?.(chunk, controller)
+
+    if (promiseable instanceof Promise)
+      return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
+    return promiseable?.mapErrSync(StreamError.new).unwrap()
   }
 
   abort(reason?: any) {
-    return this.subsink.abort?.(reason)
+    const promiseable = this.subsink.abort?.(reason)
+
+    if (promiseable instanceof Promise)
+      return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
+    return promiseable?.mapErrSync(StreamError.new).unwrap()
   }
 
   close() {
-    return this.subsink.close?.()
+    const promiseable = this.subsink.close?.()
+
+    if (promiseable instanceof Promise)
+      return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
+    return promiseable?.mapErrSync(StreamError.new).unwrap()
   }
 
 }

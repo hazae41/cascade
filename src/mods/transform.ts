@@ -1,3 +1,7 @@
+import { Result } from "@hazae41/result"
+import { Promiseable } from "libs/promises/promiseable.js"
+import { StreamError } from "./error.js"
+
 export class SuperTransformStream<I, O>  {
 
   readonly transformer: SuperTransformer<I, O>
@@ -11,7 +15,7 @@ export class SuperTransformStream<I, O>  {
    * @param readableStrategy 
    */
   constructor(
-    readonly subtransformer: Transformer<I, O>,
+    readonly subtransformer: ResultableTransformer<I, O>,
     readonly writableStrategy?: QueuingStrategy<I>,
     readonly readableStrategy?: QueuingStrategy<O>
   ) {
@@ -37,12 +41,19 @@ export class SuperTransformStream<I, O>  {
 
 }
 
+export interface ResultableTransformer<I = any, O = any> {
+  flush?: (controller: TransformStreamDefaultController<O>) => Promiseable<Result<void, unknown>>;
+  start?: (controller: TransformStreamDefaultController<O>) => Promiseable<Result<void, unknown>>;
+  transform?: (chunk: I, controller: TransformStreamDefaultController<O>) => Promiseable<Result<void, unknown>>;
+}
+
+
 export class SuperTransformer<I, O> implements Transformer<I, O> {
 
   #controller?: TransformStreamDefaultController<O>
 
   constructor(
-    readonly subtransformer: Transformer<I, O>
+    readonly subtransformer: ResultableTransformer<I, O>
   ) { }
 
   get controller() {
@@ -52,15 +63,27 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
   start(controller: TransformStreamDefaultController<O>) {
     this.#controller = controller
 
-    return this.subtransformer.start?.(controller)
+    const promiseable = this.subtransformer.start?.(controller)
+
+    if (promiseable instanceof Promise)
+      return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
+    return promiseable?.mapErrSync(StreamError.new).unwrap()
   }
 
   transform(chunk: I, controller: TransformStreamDefaultController<O>) {
-    return this.subtransformer.transform?.(chunk, controller)
+    const promiseable = this.subtransformer.transform?.(chunk, controller)
+
+    if (promiseable instanceof Promise)
+      return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
+    return promiseable?.mapErrSync(StreamError.new).unwrap()
   }
 
   flush(controller: TransformStreamDefaultController<O>) {
-    return this.subtransformer.flush?.(controller)
+    const promiseable = this.subtransformer.flush?.(controller)
+
+    if (promiseable instanceof Promise)
+      return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
+    return promiseable?.mapErrSync(StreamError.new).unwrap()
   }
 
 }

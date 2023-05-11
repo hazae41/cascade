@@ -1,3 +1,7 @@
+import { Result } from "@hazae41/result"
+import { Promiseable } from "libs/promises/promiseable.js"
+import { StreamError } from "./error.js"
+
 export class SuperReadableStream<R>  {
 
   readonly source: SuperUnderlyingDefaultSource<R>
@@ -10,7 +14,7 @@ export class SuperReadableStream<R>  {
    * @param strategy 
    */
   constructor(
-    readonly subsource: UnderlyingDefaultSource<R>,
+    readonly subsource: ResultableUnderlyingDefaultSource<R>,
     readonly strategy?: QueuingStrategy<R>
   ) {
     this.source = new SuperUnderlyingDefaultSource(subsource)
@@ -35,12 +39,18 @@ export class SuperReadableStream<R>  {
 
 }
 
+export interface ResultableUnderlyingDefaultSource<R = any> {
+  cancel?: (reason?: any) => Promiseable<Result<void, unknown>>;
+  pull?: (controller: ReadableStreamDefaultController<R>) => Promiseable<Result<void, unknown>>;
+  start?: (controller: ReadableStreamDefaultController<R>) => Promiseable<Result<void, unknown>>;
+}
+
 export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<R> {
 
   #controller?: ReadableStreamDefaultController<R>
 
   constructor(
-    readonly subsource: UnderlyingDefaultSource<R>
+    readonly subsource: ResultableUnderlyingDefaultSource<R>
   ) { }
 
   get controller() {
@@ -50,15 +60,27 @@ export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<
   start(controller: ReadableStreamDefaultController<R>) {
     this.#controller = controller
 
-    return this.subsource.start?.(controller)
+    const promiseable = this.subsource.start?.(controller)
+
+    if (promiseable instanceof Promise)
+      return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
+    return promiseable?.mapErrSync(StreamError.new).unwrap()
   }
 
   pull(controller: ReadableStreamDefaultController<R>) {
-    return this.subsource.start?.(controller)
+    const promiseable = this.subsource.start?.(controller)
+
+    if (promiseable instanceof Promise)
+      return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
+    return promiseable?.mapErrSync(StreamError.new).unwrap()
   }
 
   cancel(reason?: any) {
-    return this.subsource.cancel?.(reason)
+    const promiseable = this.subsource.cancel?.(reason)
+
+    if (promiseable instanceof Promise)
+      return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
+    return promiseable?.mapErrSync(StreamError.new).unwrap()
   }
 
 }
