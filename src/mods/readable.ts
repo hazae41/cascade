@@ -2,7 +2,7 @@ export class SuperReadableStream<R>  {
 
   readonly source: SuperUnderlyingDefaultSource<R>
 
-  closed?: { reason?: any }
+  closed?: { reason?: unknown }
 
   /**
    * Like a ReadableStream but with a getter to its controller and a "closed" field

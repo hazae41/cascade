@@ -2,7 +2,7 @@ export class SuperTransformStream<I, O>  {
 
   readonly transformer: SuperTransformer<I, O>
 
-  closed?: { reason?: any }
+  closed?: { reason?: unknown }
 
   /**
    * Like a TransformStream but with a getter to its controller and a "closed" field

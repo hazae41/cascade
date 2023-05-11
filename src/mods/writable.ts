@@ -2,7 +2,7 @@ export class SuperWritableStream<W> {
 
   readonly sink: SuperUnderlyingSink<W>
 
-  closed?: { reason?: any }
+  closed?: { reason?: unknown }
 
   /**
    * Like a WritableStream but with a getter to its controller and a "closed" field
