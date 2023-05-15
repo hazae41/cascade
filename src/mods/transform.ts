@@ -29,15 +29,15 @@ export class SuperTransformStream<I, O>  {
   }
 
   enqueue(chunk?: O) {
-    return this.transformer.controller.enqueue(chunk)
+    return this.transformer.controller.inner.enqueue(chunk)
   }
 
   error(reason?: unknown) {
-    return this.transformer.controller.error(reason)
+    return this.transformer.controller.inner.error(reason)
   }
 
   terminate() {
-    return this.transformer.controller.terminate()
+    return this.transformer.controller.inner.terminate()
   }
 
 }
@@ -77,7 +77,7 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
   #controller: Option<SuperTransformStreamDefaultController<O>> = new None()
 
   constructor(
-    readonly subtransformer: ResultableTransformer<I, O>
+    readonly inner: ResultableTransformer<I, O>
   ) { }
 
   get controller() {
@@ -87,7 +87,7 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
   start(controller: TransformStreamDefaultController<O>) {
     this.#controller = new Some(new SuperTransformStreamDefaultController(controller))
 
-    const promiseable = this.subtransformer.start?.(this.controller)
+    const promiseable = this.inner.start?.(this.controller)
 
     if (promiseable instanceof Promise)
       return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
@@ -95,7 +95,7 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
   }
 
   transform(chunk: I) {
-    const promiseable = this.subtransformer.transform?.(chunk, this.controller)
+    const promiseable = this.inner.transform?.(chunk, this.controller)
 
     if (promiseable instanceof Promise)
       return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
@@ -103,7 +103,7 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
   }
 
   flush() {
-    const promiseable = this.subtransformer.flush?.(this.controller)
+    const promiseable = this.inner.flush?.(this.controller)
 
     if (promiseable instanceof Promise)
       return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())

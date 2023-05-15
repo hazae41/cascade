@@ -27,15 +27,15 @@ export class SuperReadableStream<R>  {
   }
 
   enqueue(chunk?: R) {
-    this.source.controller.enqueue(chunk)
+    this.source.controller.inner.enqueue(chunk)
   }
 
   error(reason?: unknown) {
-    this.source.controller.error(reason)
+    this.source.controller.inner.error(reason)
   }
 
   close() {
-    this.source.controller.close()
+    this.source.controller.inner.close()
   }
 
 }
@@ -75,7 +75,7 @@ export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<
   #controller: Option<SuperReadableStreamDefaultController<R>> = new None()
 
   constructor(
-    readonly subsource: ResultableUnderlyingDefaultSource<R>
+    readonly inner: ResultableUnderlyingDefaultSource<R>
   ) { }
 
   get controller() {
@@ -85,7 +85,7 @@ export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<
   start(controller: ReadableStreamDefaultController<R>) {
     this.#controller = new Some(new SuperReadableStreamDefaultController(controller))
 
-    const promiseable = this.subsource.start?.(this.controller)
+    const promiseable = this.inner.start?.(this.controller)
 
     if (promiseable instanceof Promise)
       return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
@@ -93,7 +93,7 @@ export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<
   }
 
   pull(controller: ReadableStreamDefaultController<R>) {
-    const promiseable = this.subsource.start?.(this.controller)
+    const promiseable = this.inner.start?.(this.controller)
 
     if (promiseable instanceof Promise)
       return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
@@ -101,7 +101,7 @@ export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<
   }
 
   cancel(reason?: unknown) {
-    const promiseable = this.subsource.cancel?.(reason)
+    const promiseable = this.inner.cancel?.(reason)
 
     if (promiseable instanceof Promise)
       return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())

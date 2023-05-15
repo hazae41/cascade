@@ -26,12 +26,12 @@ export class SuperWritableStream<W> {
     return new WritableStream(sink, strategy)
   }
 
-  error(reason?: unknown) {
-    this.sink.controller.error(reason)
+  get signal() {
+    return this.sink.controller.inner.signal
   }
 
-  get signal() {
-    return this.sink.controller.signal
+  error(reason?: unknown) {
+    this.sink.controller.inner.error(reason)
   }
 
 }
