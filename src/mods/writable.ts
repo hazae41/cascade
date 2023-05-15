@@ -1,3 +1,4 @@
+import { None, Option, Some } from "@hazae41/option"
 import { Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
 import { StreamError } from "./error.js"
@@ -25,7 +26,7 @@ export class SuperWritableStream<W> {
     return new WritableStream(sink, strategy)
   }
 
-  error(reason?: any) {
+  error(reason?: unknown) {
     this.sink.controller.error(reason)
   }
 
@@ -35,41 +36,61 @@ export class SuperWritableStream<W> {
 
 }
 
-export interface ResultableUnderlyingSink<W = any> {
-  abort?: (reason?: any) => Promiseable<Result<void, unknown>>;
+export interface ResultableUnderlyingSink<W = unknown> {
+  abort?: (reason?: unknown) => Promiseable<Result<void, unknown>>;
   close?: () => Promiseable<Result<void, unknown>>;
-  start?: (controller: WritableStreamDefaultController) => Promiseable<Result<void, unknown>>;
-  write?: (chunk: W, controller: WritableStreamDefaultController) => Promiseable<Result<void, unknown>>;
+  start?: (controller: SuperWritableStreamDefaultController) => Promiseable<Result<void, unknown>>;
+  write?: (chunk: W, controller: SuperWritableStreamDefaultController) => Promiseable<Result<void, unknown>>;
+}
+
+export class SuperWritableStreamDefaultController implements WritableStreamDefaultController {
+
+  constructor(
+    readonly inner: WritableStreamDefaultController
+  ) { }
+
+  get signal() {
+    return this.inner.signal
+  }
+
+  error(reason?: unknown) {
+    this.inner.error(new StreamError(reason))
+  }
+
 }
 
 export class SuperUnderlyingSink<W> implements UnderlyingSink<W> {
 
-  #controller?: WritableStreamDefaultController
+  #controller: Option<SuperWritableStreamDefaultController> = new None()
 
   constructor(
-    readonly subsink: ResultableUnderlyingSink<W>
+    readonly inner: ResultableUnderlyingSink<W>
   ) { }
 
   get controller() {
-    return this.#controller!
+    return this.#controller.unwrap()
   }
 
   start(controller: WritableStreamDefaultController) {
-    this.#controller = controller
+    this.#controller = new Some(new SuperWritableStreamDefaultController(controller))
 
-    return this.subsink.start?.(controller)
-  }
-
-  write(chunk: W, controller: WritableStreamDefaultController) {
-    const promiseable = this.subsink.write?.(chunk, controller)
+    const promiseable = this.inner.start?.(this.controller)
 
     if (promiseable instanceof Promise)
       return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
     return promiseable?.mapErrSync(StreamError.new).unwrap()
   }
 
-  abort(reason?: any) {
-    const promiseable = this.subsink.abort?.(reason)
+  write(chunk: W) {
+    const promiseable = this.inner.write?.(chunk, this.controller)
+
+    if (promiseable instanceof Promise)
+      return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
+    return promiseable?.mapErrSync(StreamError.new).unwrap()
+  }
+
+  abort(reason?: unknown) {
+    const promiseable = this.inner.abort?.(reason)
 
     if (promiseable instanceof Promise)
       return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
@@ -77,7 +98,7 @@ export class SuperUnderlyingSink<W> implements UnderlyingSink<W> {
   }
 
   close() {
-    const promiseable = this.subsink.close?.()
+    const promiseable = this.inner.close?.()
 
     if (promiseable instanceof Promise)
       return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())

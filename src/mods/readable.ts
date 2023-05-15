@@ -1,3 +1,4 @@
+import { None, Option, Some } from "@hazae41/option"
 import { Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
 import { StreamError } from "./error.js"
@@ -29,7 +30,7 @@ export class SuperReadableStream<R>  {
     this.source.controller.enqueue(chunk)
   }
 
-  error(reason?: any) {
+  error(reason?: unknown) {
     this.source.controller.error(reason)
   }
 
@@ -39,28 +40,52 @@ export class SuperReadableStream<R>  {
 
 }
 
-export interface ResultableUnderlyingDefaultSource<R = any> {
-  cancel?: (reason?: any) => Promiseable<Result<void, unknown>>;
-  pull?: (controller: ReadableStreamDefaultController<R>) => Promiseable<Result<void, unknown>>;
-  start?: (controller: ReadableStreamDefaultController<R>) => Promiseable<Result<void, unknown>>;
+export interface ResultableUnderlyingDefaultSource<R = unknown> {
+  cancel?: (reason?: unknown) => Promiseable<Result<void, unknown>>;
+  pull?: (controller: SuperReadableStreamDefaultController<R>) => Promiseable<Result<void, unknown>>;
+  start?: (controller: SuperReadableStreamDefaultController<R>) => Promiseable<Result<void, unknown>>;
+}
+
+export class SuperReadableStreamDefaultController<R> implements ReadableStreamDefaultController<R> {
+
+  constructor(
+    readonly inner: ReadableStreamDefaultController<R>
+  ) { }
+
+  get desiredSize() {
+    return this.inner.desiredSize
+  }
+
+  close() {
+    this.inner.close()
+  }
+
+  enqueue(chunk?: R) {
+    this.inner.enqueue(chunk)
+  }
+
+  error(reason?: unknown) {
+    this.inner.error(new StreamError(reason))
+  }
+
 }
 
 export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<R> {
 
-  #controller?: ReadableStreamDefaultController<R>
+  #controller: Option<SuperReadableStreamDefaultController<R>> = new None()
 
   constructor(
     readonly subsource: ResultableUnderlyingDefaultSource<R>
   ) { }
 
   get controller() {
-    return this.#controller!
+    return this.#controller.unwrap()
   }
 
   start(controller: ReadableStreamDefaultController<R>) {
-    this.#controller = controller
+    this.#controller = new Some(new SuperReadableStreamDefaultController(controller))
 
-    const promiseable = this.subsource.start?.(controller)
+    const promiseable = this.subsource.start?.(this.controller)
 
     if (promiseable instanceof Promise)
       return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
@@ -68,14 +93,14 @@ export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<
   }
 
   pull(controller: ReadableStreamDefaultController<R>) {
-    const promiseable = this.subsource.start?.(controller)
+    const promiseable = this.subsource.start?.(this.controller)
 
     if (promiseable instanceof Promise)
       return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
     return promiseable?.mapErrSync(StreamError.new).unwrap()
   }
 
-  cancel(reason?: any) {
+  cancel(reason?: unknown) {
     const promiseable = this.subsource.cancel?.(reason)
 
     if (promiseable instanceof Promise)
