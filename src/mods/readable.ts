@@ -93,7 +93,7 @@ export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<
   }
 
   pull(controller: ReadableStreamDefaultController<R>) {
-    const promiseable = this.inner.start?.(this.controller)
+    const promiseable = this.inner.pull?.(this.controller)
 
     if (promiseable instanceof Promise)
       return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
