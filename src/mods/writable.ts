@@ -1,6 +1,7 @@
 import { None, Option, Some } from "@hazae41/option"
-import { Err, Ok, Result } from "@hazae41/result"
+import { Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
+import { tryError } from "./cascade.js"
 import { StreamControllerError, StreamError } from "./error.js"
 
 export class SuperWritableStream<W> {
@@ -35,11 +36,7 @@ export class SuperWritableStream<W> {
   }
 
   tryError(reason?: unknown): Result<void, StreamControllerError> {
-    try {
-      return new Ok(this.error(reason))
-    } catch (e: unknown) {
-      return new Err(new StreamControllerError(e))
-    }
+    return tryError(this, reason)
   }
 
 }
@@ -63,6 +60,10 @@ export class SuperWritableStreamDefaultController implements WritableStreamDefau
 
   error(reason?: unknown) {
     this.inner.error(new StreamError(reason))
+  }
+
+  tryError(reason?: unknown): Result<void, StreamControllerError> {
+    return tryError(this, reason)
   }
 
 }

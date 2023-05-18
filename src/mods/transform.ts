@@ -1,6 +1,7 @@
 import { None, Option, Some } from "@hazae41/option"
-import { Err, Ok, Result } from "@hazae41/result"
+import { Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
+import { tryEnqueue, tryError, tryTerminate } from "./cascade.js"
 import { StreamControllerError, StreamError } from "./error.js"
 
 export class SuperTransformStream<I, O>  {
@@ -41,27 +42,15 @@ export class SuperTransformStream<I, O>  {
   }
 
   tryEnqueue(chunk?: O): Result<void, StreamControllerError> {
-    try {
-      return new Ok(this.enqueue(chunk))
-    } catch (e: unknown) {
-      return new Err(new StreamControllerError(e))
-    }
+    return tryEnqueue(this, chunk)
   }
 
   tryError(reason?: unknown): Result<void, StreamControllerError> {
-    try {
-      return new Ok(this.error(reason))
-    } catch (e: unknown) {
-      return new Err(new StreamControllerError(e))
-    }
+    return tryError(this, reason)
   }
 
   tryTerminate(): Result<void, StreamControllerError> {
-    try {
-      return new Ok(this.terminate())
-    } catch (e: unknown) {
-      return new Err(new StreamControllerError(e))
-    }
+    return tryTerminate(this)
   }
 
 }
@@ -92,6 +81,18 @@ export class SuperTransformStreamDefaultController<O> implements TransformStream
 
   terminate(): void {
     this.inner.terminate()
+  }
+
+  tryEnqueue(chunk?: O): Result<void, StreamControllerError> {
+    return tryEnqueue(this, chunk)
+  }
+
+  tryError(reason?: unknown): Result<void, StreamControllerError> {
+    return tryError(this, reason)
+  }
+
+  tryTerminate(): Result<void, StreamControllerError> {
+    return tryTerminate(this)
   }
 
 }

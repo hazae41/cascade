@@ -1,6 +1,7 @@
 import { None, Option, Some } from "@hazae41/option"
-import { Err, Ok, Result } from "@hazae41/result"
+import { Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
+import { tryClose, tryEnqueue, tryError } from "./cascade.js"
 import { StreamControllerError, StreamError } from "./error.js"
 
 export class SuperReadableStream<R>  {
@@ -39,27 +40,15 @@ export class SuperReadableStream<R>  {
   }
 
   tryEnqueue(chunk?: R): Result<void, StreamControllerError> {
-    try {
-      return new Ok(this.enqueue(chunk))
-    } catch (e: unknown) {
-      return new Err(new StreamControllerError(e))
-    }
+    return tryEnqueue(this, chunk)
   }
 
   tryError(reason?: unknown): Result<void, StreamControllerError> {
-    try {
-      return new Ok(this.error(reason))
-    } catch (e: unknown) {
-      return new Err(new StreamControllerError(e))
-    }
+    return tryError(this, reason)
   }
 
   tryClose(): Result<void, StreamControllerError> {
-    try {
-      return new Ok(this.close())
-    } catch (e: unknown) {
-      return new Err(new StreamControllerError(e))
-    }
+    return tryClose(this)
   }
 
 }
@@ -90,6 +79,18 @@ export class SuperReadableStreamDefaultController<R> implements ReadableStreamDe
 
   error(reason?: unknown) {
     this.inner.error(new StreamError(reason))
+  }
+
+  tryEnqueue(chunk?: R): Result<void, StreamControllerError> {
+    return tryEnqueue(this, chunk)
+  }
+
+  tryError(reason?: unknown): Result<void, StreamControllerError> {
+    return tryError(this, reason)
+  }
+
+  tryClose(): Result<void, StreamControllerError> {
+    return tryClose(this)
   }
 
 }
