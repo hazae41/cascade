@@ -1,5 +1,11 @@
 import { Err, Ok, Result } from "@hazae41/result"
-import { StreamControllerError } from "./errors.js"
+import { StreamControllerError, StreamError } from "./errors.js"
+
+export function unthrow(e: unknown): Err<StreamError> {
+  if (e instanceof StreamError)
+    return new Err(e)
+  throw e
+}
 
 export interface Enqueueable<T> {
   enqueue(chunk?: T): void
