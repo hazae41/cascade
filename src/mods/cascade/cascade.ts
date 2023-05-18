@@ -1,7 +1,7 @@
 import { Err, Ok, Result } from "@hazae41/result"
 import { StreamControllerError, StreamError } from "./errors.js"
 
-export function unthrow(e: unknown): Err<StreamError> {
+export function unthrow(e: unknown): Result<never, StreamError> {
   if (e instanceof StreamError)
     return new Err(e)
   throw e
