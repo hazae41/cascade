@@ -1,5 +1,5 @@
 import { Err, Ok, Result } from "@hazae41/result"
-import { StreamControllerError } from "./error.js"
+import { StreamControllerError } from "./errors.js"
 
 export interface Enqueueable<T> {
   enqueue(chunk?: T): void

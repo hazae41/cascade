@@ -2,7 +2,7 @@ import { None, Option, Some } from "@hazae41/option"
 import { Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
 import { tryEnqueue, tryError, tryTerminate } from "./cascade.js"
-import { StreamControllerError, StreamError } from "./error.js"
+import { StreamControllerError, StreamError } from "./errors.js"
 
 export class SuperTransformStream<I, O>  {
 
