@@ -1,7 +1,7 @@
 import { None, Option, Some } from "@hazae41/option"
-import { Result } from "@hazae41/result"
+import { Err, Ok, Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
-import { StreamError } from "./error.js"
+import { StreamControllerError, StreamError } from "./error.js"
 
 export class SuperTransformStream<I, O>  {
 
@@ -38,6 +38,30 @@ export class SuperTransformStream<I, O>  {
 
   terminate() {
     return this.transformer.controller.inner.terminate()
+  }
+
+  tryEnqueue(chunk?: O): Result<void, StreamControllerError> {
+    try {
+      return new Ok(this.enqueue(chunk))
+    } catch (e: unknown) {
+      return new Err(new StreamControllerError(e))
+    }
+  }
+
+  tryError(reason?: unknown): Result<void, StreamControllerError> {
+    try {
+      return new Ok(this.error(reason))
+    } catch (e: unknown) {
+      return new Err(new StreamControllerError(e))
+    }
+  }
+
+  tryTerminate(): Result<void, StreamControllerError> {
+    try {
+      return new Ok(this.terminate())
+    } catch (e: unknown) {
+      return new Err(new StreamControllerError(e))
+    }
   }
 
 }

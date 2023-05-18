@@ -1,7 +1,7 @@
 import { None, Option, Some } from "@hazae41/option"
-import { Result } from "@hazae41/result"
+import { Err, Ok, Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
-import { StreamError } from "./error.js"
+import { StreamControllerError, StreamError } from "./error.js"
 
 export class SuperWritableStream<W> {
 
@@ -32,6 +32,14 @@ export class SuperWritableStream<W> {
 
   error(reason?: unknown) {
     this.sink.controller.inner.error(reason)
+  }
+
+  tryError(reason?: unknown): Result<void, StreamControllerError> {
+    try {
+      return new Ok(this.error(reason))
+    } catch (e: unknown) {
+      return new Err(new StreamControllerError(e))
+    }
   }
 
 }

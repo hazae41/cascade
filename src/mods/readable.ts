@@ -1,7 +1,7 @@
 import { None, Option, Some } from "@hazae41/option"
-import { Result } from "@hazae41/result"
+import { Err, Ok, Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
-import { StreamError } from "./error.js"
+import { StreamControllerError, StreamError } from "./error.js"
 
 export class SuperReadableStream<R>  {
 
@@ -36,6 +36,30 @@ export class SuperReadableStream<R>  {
 
   close() {
     this.source.controller.inner.close()
+  }
+
+  tryEnqueue(chunk?: R): Result<void, StreamControllerError> {
+    try {
+      return new Ok(this.enqueue(chunk))
+    } catch (e: unknown) {
+      return new Err(new StreamControllerError(e))
+    }
+  }
+
+  tryError(reason?: unknown): Result<void, StreamControllerError> {
+    try {
+      return new Ok(this.error(reason))
+    } catch (e: unknown) {
+      return new Err(new StreamControllerError(e))
+    }
+  }
+
+  tryClose(): Result<void, StreamControllerError> {
+    try {
+      return new Ok(this.close())
+    } catch (e: unknown) {
+      return new Err(new StreamControllerError(e))
+    }
   }
 
 }
