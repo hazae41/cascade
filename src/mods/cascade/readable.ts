@@ -32,15 +32,15 @@ export class SuperReadableStream<R>  {
   }
 
   enqueue(chunk?: R) {
-    this.controller.inner.enqueue(chunk)
+    this.controller.enqueue(chunk)
   }
 
   error(reason?: unknown) {
-    this.controller.inner.error(reason)
+    this.controller.error(reason)
   }
 
   close() {
-    this.controller.inner.close()
+    this.controller.close()
   }
 
   tryEnqueue(chunk?: R): Result<void, StreamControllerError> {

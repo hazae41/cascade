@@ -34,15 +34,15 @@ export class SuperTransformStream<I, O>  {
   }
 
   enqueue(chunk?: O) {
-    return this.inner.controller.inner.enqueue(chunk)
+    return this.controller.enqueue(chunk)
   }
 
   error(reason?: unknown) {
-    return this.controller.inner.error(reason)
+    return this.controller.error(reason)
   }
 
   terminate() {
-    return this.controller.inner.terminate()
+    return this.controller.terminate()
   }
 
   tryEnqueue(chunk?: O): Result<void, StreamControllerError> {

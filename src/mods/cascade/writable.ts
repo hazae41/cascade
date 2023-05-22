@@ -32,11 +32,11 @@ export class SuperWritableStream<W> {
   }
 
   get signal() {
-    return this.inner.controller.inner.signal
+    return this.controller.signal
   }
 
   error(reason?: unknown) {
-    this.inner.controller.inner.error(reason)
+    this.controller.error(reason)
   }
 
   tryError(reason?: unknown): Result<void, StreamControllerError> {
