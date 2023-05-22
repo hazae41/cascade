@@ -6,39 +6,43 @@ import { StreamControllerError, StreamError } from "./errors.js"
 
 export class SuperTransformStream<I, O>  {
 
-  readonly transformer: SuperTransformer<I, O>
+  readonly inner: SuperTransformer<I, O>
 
   closed?: { reason?: unknown }
 
   /**
    * Like a TransformStream but with a getter to its controller and a "closed" field
-   * @param subtransformer 
+   * @param subinner 
    * @param writableStrategy 
    * @param readableStrategy 
    */
   constructor(
-    readonly subtransformer: ResultableTransformer<I, O>,
+    readonly subinner: ResultableTransformer<I, O>,
     readonly writableStrategy?: QueuingStrategy<I>,
     readonly readableStrategy?: QueuingStrategy<O>
   ) {
-    this.transformer = new SuperTransformer(subtransformer)
+    this.inner = new SuperTransformer(subinner)
+  }
+
+  get controller() {
+    return this.inner.controller
   }
 
   start() {
-    const { transformer, writableStrategy, readableStrategy } = this
+    const { inner: transformer, writableStrategy, readableStrategy } = this
     return new TransformStream(transformer, writableStrategy, readableStrategy)
   }
 
   enqueue(chunk?: O) {
-    return this.transformer.controller.inner.enqueue(chunk)
+    return this.inner.controller.inner.enqueue(chunk)
   }
 
   error(reason?: unknown) {
-    return this.transformer.controller.inner.error(reason)
+    return this.controller.inner.error(reason)
   }
 
   terminate() {
-    return this.transformer.controller.inner.terminate()
+    return this.controller.inner.terminate()
   }
 
   tryEnqueue(chunk?: O): Result<void, StreamControllerError> {

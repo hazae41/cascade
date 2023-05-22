@@ -6,37 +6,41 @@ import { StreamControllerError, StreamError } from "./errors.js"
 
 export class SuperReadableStream<R>  {
 
-  readonly source: SuperUnderlyingDefaultSource<R>
+  readonly inner: SuperUnderlyingDefaultSource<R>
 
   closed?: { reason?: unknown }
 
   /**
    * Like a ReadableStream but with a getter to its controller and a "closed" field
-   * @param subsource 
+   * @param subinner 
    * @param strategy 
    */
   constructor(
-    readonly subsource: ResultableUnderlyingDefaultSource<R>,
+    readonly subinner: ResultableUnderlyingDefaultSource<R>,
     readonly strategy?: QueuingStrategy<R>
   ) {
-    this.source = new SuperUnderlyingDefaultSource(subsource)
+    this.inner = new SuperUnderlyingDefaultSource(subinner)
+  }
+
+  get controller() {
+    return this.inner.controller
   }
 
   start() {
-    const { source, strategy } = this
+    const { inner: source, strategy } = this
     return new ReadableStream(source, strategy)
   }
 
   enqueue(chunk?: R) {
-    this.source.controller.inner.enqueue(chunk)
+    this.controller.inner.enqueue(chunk)
   }
 
   error(reason?: unknown) {
-    this.source.controller.inner.error(reason)
+    this.controller.inner.error(reason)
   }
 
   close() {
-    this.source.controller.inner.close()
+    this.controller.inner.close()
   }
 
   tryEnqueue(chunk?: R): Result<void, StreamControllerError> {
