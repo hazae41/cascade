@@ -1,5 +1,6 @@
 export class StreamError extends Error {
   readonly #class = StreamError
+  readonly name = this.#class.name
 
   constructor(cause: unknown) {
     super(undefined, { cause })
@@ -13,6 +14,7 @@ export class StreamError extends Error {
 
 export class StreamControllerError extends Error {
   readonly #class = StreamControllerError
+  readonly name = this.#class.name
 
   constructor(cause: unknown) {
     super(undefined, { cause })
