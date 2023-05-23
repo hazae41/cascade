@@ -49,13 +49,24 @@ export class CatchedError extends Error {
 
 /**
  * `Ok` good errors and `Err` bad ones
- * @param e 
+ * @param error 
  * @returns 
  */
-export function filter(e: unknown): Result<unknown, unknown> {
-  if (e instanceof Panic)
-    return new Err(e)
-  if (e instanceof CatchedError)
-    return new Err(e.cause)
-  return new Ok(e)
+export function filter(error: unknown): Result<unknown, unknown> {
+  if (error instanceof Panic)
+    return new Err(error)
+  if (error instanceof CatchedError)
+    return new Err(error.cause)
+  return new Ok(error)
+}
+
+/**
+ * Throw `result.inner` if `Err`, return `Err(result.inner)` if `Ok`
+ * @param result 
+ * @returns 
+ */
+export function rethrow(result: Result<unknown, unknown>) {
+  if (result.isOk())
+    return new Err(result.get())
+  throw result.get()
 }
