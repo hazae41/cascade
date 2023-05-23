@@ -2,7 +2,7 @@ import { None, Option, Some } from "@hazae41/option"
 import { Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
 import { tryError } from "./cascade.js"
-import { StreamControllerError, StreamError } from "./errors.js"
+import { ControllerError, StreamError } from "./errors.js"
 
 export class SuperWritableStream<W> {
 
@@ -39,7 +39,7 @@ export class SuperWritableStream<W> {
     this.controller.error(reason)
   }
 
-  tryError(reason?: unknown): Result<void, StreamControllerError> {
+  tryError(reason?: unknown): Result<void, ControllerError> {
     return tryError(this, reason)
   }
 
@@ -63,10 +63,10 @@ export class SuperWritableStreamDefaultController implements WritableStreamDefau
   }
 
   error(reason?: unknown) {
-    this.inner.error(new StreamError(reason))
+    this.inner.error(StreamError.from(reason))
   }
 
-  tryError(reason?: unknown): Result<void, StreamControllerError> {
+  tryError(reason?: unknown): Result<void, ControllerError> {
     return tryError(this, reason)
   }
 
@@ -90,32 +90,32 @@ export class SuperUnderlyingSink<W> implements UnderlyingSink<W> {
     const promiseable = this.inner.start?.(this.controller)
 
     if (promiseable instanceof Promise)
-      return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
-    return promiseable?.mapErrSync(StreamError.new).unwrap()
+      return promiseable.then(r => r.mapErrSync(StreamError.from).unwrap())
+    return promiseable?.mapErrSync(StreamError.from).unwrap()
   }
 
   write(chunk: W) {
     const promiseable = this.inner.write?.(chunk, this.controller)
 
     if (promiseable instanceof Promise)
-      return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
-    return promiseable?.mapErrSync(StreamError.new).unwrap()
+      return promiseable.then(r => r.mapErrSync(StreamError.from).unwrap())
+    return promiseable?.mapErrSync(StreamError.from).unwrap()
   }
 
   abort(reason?: unknown) {
     const promiseable = this.inner.abort?.(reason)
 
     if (promiseable instanceof Promise)
-      return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
-    return promiseable?.mapErrSync(StreamError.new).unwrap()
+      return promiseable.then(r => r.mapErrSync(StreamError.from).unwrap())
+    return promiseable?.mapErrSync(StreamError.from).unwrap()
   }
 
   close() {
     const promiseable = this.inner.close?.()
 
     if (promiseable instanceof Promise)
-      return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
-    return promiseable?.mapErrSync(StreamError.new).unwrap()
+      return promiseable.then(r => r.mapErrSync(StreamError.from).unwrap())
+    return promiseable?.mapErrSync(StreamError.from).unwrap()
   }
 
 }

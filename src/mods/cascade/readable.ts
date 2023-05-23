@@ -2,7 +2,7 @@ import { None, Option, Some } from "@hazae41/option"
 import { Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
 import { tryClose, tryEnqueue, tryError } from "./cascade.js"
-import { StreamControllerError, StreamError } from "./errors.js"
+import { ControllerError, StreamError } from "./errors.js"
 
 export class SuperReadableStream<R>  {
 
@@ -43,15 +43,15 @@ export class SuperReadableStream<R>  {
     this.controller.close()
   }
 
-  tryEnqueue(chunk?: R): Result<void, StreamControllerError> {
+  tryEnqueue(chunk?: R): Result<void, ControllerError> {
     return tryEnqueue(this, chunk)
   }
 
-  tryError(reason?: unknown): Result<void, StreamControllerError> {
+  tryError(reason?: unknown): Result<void, ControllerError> {
     return tryError(this, reason)
   }
 
-  tryClose(): Result<void, StreamControllerError> {
+  tryClose(): Result<void, ControllerError> {
     return tryClose(this)
   }
 
@@ -82,18 +82,18 @@ export class SuperReadableStreamDefaultController<R> implements ReadableStreamDe
   }
 
   error(reason?: unknown) {
-    this.inner.error(new StreamError(reason))
+    this.inner.error(StreamError.from(reason))
   }
 
-  tryEnqueue(chunk?: R): Result<void, StreamControllerError> {
+  tryEnqueue(chunk?: R): Result<void, ControllerError> {
     return tryEnqueue(this, chunk)
   }
 
-  tryError(reason?: unknown): Result<void, StreamControllerError> {
+  tryError(reason?: unknown): Result<void, ControllerError> {
     return tryError(this, reason)
   }
 
-  tryClose(): Result<void, StreamControllerError> {
+  tryClose(): Result<void, ControllerError> {
     return tryClose(this)
   }
 
@@ -117,24 +117,24 @@ export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<
     const promiseable = this.inner.start?.(this.controller)
 
     if (promiseable instanceof Promise)
-      return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
-    return promiseable?.mapErrSync(StreamError.new).unwrap()
+      return promiseable.then(r => r.mapErrSync(StreamError.from).unwrap())
+    return promiseable?.mapErrSync(StreamError.from).unwrap()
   }
 
   pull(controller: ReadableStreamDefaultController<R>) {
     const promiseable = this.inner.pull?.(this.controller)
 
     if (promiseable instanceof Promise)
-      return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
-    return promiseable?.mapErrSync(StreamError.new).unwrap()
+      return promiseable.then(r => r.mapErrSync(StreamError.from).unwrap())
+    return promiseable?.mapErrSync(StreamError.from).unwrap()
   }
 
   cancel(reason?: unknown) {
     const promiseable = this.inner.cancel?.(reason)
 
     if (promiseable instanceof Promise)
-      return promiseable.then(r => r.mapErrSync(StreamError.new).unwrap())
-    return promiseable?.mapErrSync(StreamError.new).unwrap()
+      return promiseable.then(r => r.mapErrSync(StreamError.from).unwrap())
+    return promiseable?.mapErrSync(StreamError.from).unwrap()
   }
 
 }
