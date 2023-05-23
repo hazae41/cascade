@@ -1,10 +1,10 @@
 import { Err, Ok, Result } from "@hazae41/result"
 import { ControllerError, StreamError } from "./errors.js"
 
-export function unthrow(e: unknown): Result<never, StreamError> {
+export function unthrow(e: unknown): Result<unknown, unknown> {
   if (e instanceof StreamError)
-    return new Err(e)
-  throw e
+    return new Ok(e.cause)
+  return new Err(e)
 }
 
 export interface Enqueueable<T> {
