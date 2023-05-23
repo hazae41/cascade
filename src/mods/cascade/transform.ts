@@ -2,7 +2,7 @@ import { None, Option, Some } from "@hazae41/option"
 import { Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
 import { tryEnqueue, tryError, tryTerminate } from "./cascade.js"
-import { ControllerError, StreamError } from "./errors.js"
+import { CatchedError, ControllerError, StreamError } from "./errors.js"
 
 export class SuperTransformStream<I, O>  {
 
@@ -114,29 +114,50 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
   }
 
   start(controller: TransformStreamDefaultController<O>) {
-    this.#controller = new Some(new SuperTransformStreamDefaultController(controller))
+    try {
+      this.#controller = new Some(new SuperTransformStreamDefaultController(controller))
 
-    const promiseable = this.inner.start?.(this.controller)
+      const promiseable = this.inner.start?.(this.controller)
 
-    if (promiseable instanceof Promise)
-      return promiseable.then(r => r.mapErrSync(StreamError.from).unwrap())
-    return promiseable?.mapErrSync(StreamError.from).unwrap()
+      if (promiseable instanceof Promise)
+        return promiseable
+          .then(StreamError.fromAndUnwrap)
+          .catch(CatchedError.fromAndThrow)
+
+      return promiseable?.mapErrSync(StreamError.from).unwrap()
+    } catch (e: unknown) {
+      throw CatchedError.from(e)
+    }
   }
 
   transform(chunk: I) {
-    const promiseable = this.inner.transform?.(chunk, this.controller)
+    try {
+      const promiseable = this.inner.transform?.(chunk, this.controller)
 
-    if (promiseable instanceof Promise)
-      return promiseable.then(r => r.mapErrSync(StreamError.from).unwrap())
-    return promiseable?.mapErrSync(StreamError.from).unwrap()
+      if (promiseable instanceof Promise)
+        return promiseable
+          .then(StreamError.fromAndUnwrap)
+          .catch(CatchedError.fromAndThrow)
+
+      return promiseable?.mapErrSync(StreamError.from).unwrap()
+    } catch (e: unknown) {
+      throw CatchedError.from(e)
+    }
   }
 
   flush() {
-    const promiseable = this.inner.flush?.(this.controller)
+    try {
+      const promiseable = this.inner.flush?.(this.controller)
 
-    if (promiseable instanceof Promise)
-      return promiseable.then(r => r.mapErrSync(StreamError.from).unwrap())
-    return promiseable?.mapErrSync(StreamError.from).unwrap()
+      if (promiseable instanceof Promise)
+        return promiseable
+          .then(StreamError.fromAndUnwrap)
+          .catch(CatchedError.fromAndThrow)
+
+      return promiseable?.mapErrSync(StreamError.from).unwrap()
+    } catch (e: unknown) {
+      throw CatchedError.from(e)
+    }
   }
 
 }

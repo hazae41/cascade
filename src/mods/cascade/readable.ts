@@ -2,7 +2,7 @@ import { None, Option, Some } from "@hazae41/option"
 import { Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
 import { tryClose, tryEnqueue, tryError } from "./cascade.js"
-import { ControllerError, StreamError } from "./errors.js"
+import { CatchedError, ControllerError, StreamError } from "./errors.js"
 
 export class SuperReadableStream<R>  {
 
@@ -112,29 +112,50 @@ export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<
   }
 
   start(controller: ReadableStreamDefaultController<R>) {
-    this.#controller = new Some(new SuperReadableStreamDefaultController(controller))
+    try {
+      this.#controller = new Some(new SuperReadableStreamDefaultController(controller))
 
-    const promiseable = this.inner.start?.(this.controller)
+      const promiseable = this.inner.start?.(this.controller)
 
-    if (promiseable instanceof Promise)
-      return promiseable.then(r => r.mapErrSync(StreamError.from).unwrap())
-    return promiseable?.mapErrSync(StreamError.from).unwrap()
+      if (promiseable instanceof Promise)
+        return promiseable
+          .then(StreamError.fromAndUnwrap)
+          .catch(CatchedError.fromAndThrow)
+
+      return promiseable?.mapErrSync(StreamError.from).unwrap()
+    } catch (e: unknown) {
+      throw CatchedError.from(e)
+    }
   }
 
   pull(controller: ReadableStreamDefaultController<R>) {
-    const promiseable = this.inner.pull?.(this.controller)
+    try {
+      const promiseable = this.inner.pull?.(this.controller)
 
-    if (promiseable instanceof Promise)
-      return promiseable.then(r => r.mapErrSync(StreamError.from).unwrap())
-    return promiseable?.mapErrSync(StreamError.from).unwrap()
+      if (promiseable instanceof Promise)
+        return promiseable
+          .then(StreamError.fromAndUnwrap)
+          .catch(CatchedError.fromAndThrow)
+
+      return promiseable?.mapErrSync(StreamError.from).unwrap()
+    } catch (e: unknown) {
+      throw CatchedError.from(e)
+    }
   }
 
   cancel(reason?: unknown) {
-    const promiseable = this.inner.cancel?.(reason)
+    try {
+      const promiseable = this.inner.cancel?.(reason)
 
-    if (promiseable instanceof Promise)
-      return promiseable.then(r => r.mapErrSync(StreamError.from).unwrap())
-    return promiseable?.mapErrSync(StreamError.from).unwrap()
+      if (promiseable instanceof Promise)
+        return promiseable
+          .then(StreamError.fromAndUnwrap)
+          .catch(CatchedError.fromAndThrow)
+
+      return promiseable?.mapErrSync(StreamError.from).unwrap()
+    } catch (e: unknown) {
+      throw CatchedError.from(e)
+    }
   }
 
 }
