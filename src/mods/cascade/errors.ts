@@ -1,4 +1,4 @@
-import { Panic, Result } from "@hazae41/result"
+import { Err, Ok, Panic, Result } from "@hazae41/result"
 
 /**
  * Error passed to `controller.error()` or returned from `start`, `pull`, `write`, `transform`, `flush`, `cancel`, `abort`, `close`
@@ -48,14 +48,14 @@ export class CatchedError extends Error {
 }
 
 /**
- * Throw bad errors and return good ones
+ * `Ok` good errors and `Err` bad ones
  * @param e 
  * @returns 
  */
-export function rethrow<T>(e: T) {
+export function unthrow(e: unknown): Result<unknown, unknown> {
   if (e instanceof Panic)
-    throw e
+    return new Err(e)
   if (e instanceof CatchedError)
-    throw e.cause
-  return e as Exclude<T, Panic | CatchedError>
+    return new Err(e.cause)
+  return new Ok(e)
 }
