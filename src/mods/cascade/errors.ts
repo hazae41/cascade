@@ -52,7 +52,7 @@ export class CatchedError extends Error {
  * @param e 
  * @returns 
  */
-export function unthrow(e: unknown): Result<unknown, unknown> {
+export function filter(e: unknown): Result<unknown, unknown> {
   if (e instanceof Panic)
     return new Err(e)
   if (e instanceof CatchedError)
