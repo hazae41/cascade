@@ -121,10 +121,12 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
 
       if (promiseable instanceof Promise)
         return promiseable
-          .then(StreamError.fromAndUnwrap)
+          .then(StreamError.okOrFromAndThrow)
           .catch(CatchedError.fromAndThrow)
 
-      return promiseable?.mapErrSync(StreamError.from).unwrap()
+      if (promiseable === undefined)
+        return
+      return StreamError.okOrFromAndThrow(promiseable)
     } catch (e: unknown) {
       throw CatchedError.from(e)
     }
@@ -136,10 +138,12 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
 
       if (promiseable instanceof Promise)
         return promiseable
-          .then(StreamError.fromAndUnwrap)
+          .then(StreamError.okOrFromAndThrow)
           .catch(CatchedError.fromAndThrow)
 
-      return promiseable?.mapErrSync(StreamError.from).unwrap()
+      if (promiseable === undefined)
+        return
+      return StreamError.okOrFromAndThrow(promiseable)
     } catch (e: unknown) {
       throw CatchedError.from(e)
     }
@@ -151,10 +155,12 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
 
       if (promiseable instanceof Promise)
         return promiseable
-          .then(StreamError.fromAndUnwrap)
+          .then(StreamError.okOrFromAndThrow)
           .catch(CatchedError.fromAndThrow)
 
-      return promiseable?.mapErrSync(StreamError.from).unwrap()
+      if (promiseable === undefined)
+        return
+      return StreamError.okOrFromAndThrow(promiseable)
     } catch (e: unknown) {
       throw CatchedError.from(e)
     }

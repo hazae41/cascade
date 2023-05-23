@@ -11,8 +11,10 @@ export class StreamError extends Error {
     return new StreamError(undefined, { cause })
   }
 
-  static fromAndUnwrap<T>(result: Result<T, unknown>) {
-    return result.mapErrSync(StreamError.from).unwrap()
+  static okOrFromAndThrow<T>(result: Result<T, unknown>) {
+    if (result.isOk())
+      return result.get()
+    throw StreamError.from(result.get())
   }
 
 }
