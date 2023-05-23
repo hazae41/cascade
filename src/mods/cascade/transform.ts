@@ -6,30 +6,30 @@ import { ControllerError, StreamError } from "./errors.js"
 
 export class SuperTransformStream<I, O>  {
 
-  readonly inner: SuperTransformer<I, O>
+  readonly transformer: SuperTransformer<I, O>
 
   closed?: { reason?: unknown }
 
   /**
    * Like a TransformStream but with a getter to its controller and a "closed" field
-   * @param subinner 
+   * @param subtransformer 
    * @param writableStrategy 
    * @param readableStrategy 
    */
   constructor(
-    readonly subinner: ResultableTransformer<I, O>,
+    readonly subtransformer: ResultableTransformer<I, O>,
     readonly writableStrategy?: QueuingStrategy<I>,
     readonly readableStrategy?: QueuingStrategy<O>
   ) {
-    this.inner = new SuperTransformer(subinner)
+    this.transformer = new SuperTransformer(subtransformer)
   }
 
   get controller() {
-    return this.inner.controller
+    return this.transformer.controller
   }
 
   start() {
-    const { inner: transformer, writableStrategy, readableStrategy } = this
+    const { transformer, writableStrategy, readableStrategy } = this
     return new TransformStream(transformer, writableStrategy, readableStrategy)
   }
 

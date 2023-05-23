@@ -6,28 +6,28 @@ import { ControllerError, StreamError } from "./errors.js"
 
 export class SuperReadableStream<R>  {
 
-  readonly inner: SuperUnderlyingDefaultSource<R>
+  readonly source: SuperUnderlyingDefaultSource<R>
 
   closed?: { reason?: unknown }
 
   /**
    * Like a ReadableStream but with a getter to its controller and a "closed" field
-   * @param subinner 
+   * @param subsource 
    * @param strategy 
    */
   constructor(
-    readonly subinner: ResultableUnderlyingDefaultSource<R>,
+    readonly subsource: ResultableUnderlyingDefaultSource<R>,
     readonly strategy?: QueuingStrategy<R>
   ) {
-    this.inner = new SuperUnderlyingDefaultSource(subinner)
+    this.source = new SuperUnderlyingDefaultSource(subsource)
   }
 
   get controller() {
-    return this.inner.controller
+    return this.source.controller
   }
 
   start() {
-    const { inner: source, strategy } = this
+    const { source, strategy } = this
     return new ReadableStream(source, strategy)
   }
 

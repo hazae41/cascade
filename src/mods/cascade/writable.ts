@@ -6,28 +6,28 @@ import { ControllerError, StreamError } from "./errors.js"
 
 export class SuperWritableStream<W> {
 
-  readonly inner: SuperUnderlyingSink<W>
+  readonly sink: SuperUnderlyingSink<W>
 
   closed?: { reason?: unknown }
 
   /**
    * Like a WritableStream but with a getter to its controller and a "closed" field
-   * @param subinner 
+   * @param subsink 
    * @param strategy 
    */
   constructor(
-    readonly subinner: ResultableUnderlyingSink<W>,
+    readonly subsink: ResultableUnderlyingSink<W>,
     readonly strategy?: QueuingStrategy<W>
   ) {
-    this.inner = new SuperUnderlyingSink(subinner)
+    this.sink = new SuperUnderlyingSink(subsink)
   }
 
   get controller() {
-    return this.inner.controller
+    return this.sink.controller
   }
 
   start() {
-    const { inner: sink, strategy } = this
+    const { sink, strategy } = this
     return new WritableStream(sink, strategy)
   }
 
