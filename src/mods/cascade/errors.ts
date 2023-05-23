@@ -59,6 +59,8 @@ export function filter(error: unknown): Result<unknown, unknown> {
     return new Err(error)
   if (error instanceof CatchedError)
     return new Err(error.cause)
+  if (error instanceof StreamError)
+    return new Ok(error.cause)
   return new Ok(error)
 }
 

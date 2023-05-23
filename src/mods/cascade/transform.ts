@@ -121,8 +121,8 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
 
       if (promiseable instanceof Promise)
         return promiseable
-          .then(StreamError.okOrFromAndThrow)
           .catch(CatchedError.fromAndThrow)
+          .then(StreamError.okOrFromAndThrow)
 
       if (promiseable === undefined)
         return
@@ -138,8 +138,8 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
 
       if (promiseable instanceof Promise)
         return promiseable
-          .then(StreamError.okOrFromAndThrow)
           .catch(CatchedError.fromAndThrow)
+          .then(StreamError.okOrFromAndThrow)
 
       if (promiseable === undefined)
         return
@@ -155,8 +155,8 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
 
       if (promiseable instanceof Promise)
         return promiseable
-          .then(StreamError.okOrFromAndThrow)
           .catch(CatchedError.fromAndThrow)
+          .then(StreamError.okOrFromAndThrow)
 
       if (promiseable === undefined)
         return
