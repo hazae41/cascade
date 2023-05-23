@@ -1,7 +1,9 @@
-import { Err, Ok, Result } from "@hazae41/result"
+import { Err, Ok, Panic, Result } from "@hazae41/result"
 import { ControllerError, StreamError } from "./errors.js"
 
 export function unthrow(e: unknown): Result<unknown, unknown> {
+  if (e instanceof Panic)
+    throw e
   if (e instanceof StreamError)
     return new Ok(e.cause)
   return new Err(e)
