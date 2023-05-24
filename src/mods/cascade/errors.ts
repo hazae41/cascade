@@ -1,23 +1,4 @@
-import { Err, Ok, Panic, Result } from "@hazae41/result"
-
-/**
- * Error passed to `controller.error()` or returned from `start`, `pull`, `write`, `transform`, `flush`, `cancel`, `abort`, `close`
- */
-export class StreamError extends Error {
-  readonly #class = StreamError
-  readonly name = this.#class.name
-
-  static from(cause: unknown) {
-    return new StreamError(undefined, { cause })
-  }
-
-  static okOrFromAndThrow<T>(result: Result<T, unknown>) {
-    if (result.isOk())
-      return result.get()
-    throw StreamError.from(result.get())
-  }
-
-}
+import { Err, Ok, Result } from "@hazae41/result"
 
 /**
  * Error returned from `tryEnqueue`, `tryError`, `tryClose`, `tryTerminate`
@@ -55,12 +36,8 @@ export class CatchedError extends Error {
  * @returns 
  */
 export function filter(error: unknown): Result<unknown, unknown> {
-  if (error instanceof Panic)
-    return new Err(error)
   if (error instanceof CatchedError)
     return new Err(error.cause)
-  if (error instanceof StreamError)
-    return new Ok(error.cause)
   return new Ok(error)
 }
 

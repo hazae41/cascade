@@ -1,8 +1,9 @@
 import { None, Option, Some } from "@hazae41/option"
 import { Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
+import { Results } from "libs/results/results.js"
 import { tryClose, tryEnqueue, tryError } from "./cascade.js"
-import { CatchedError, ControllerError, StreamError } from "./errors.js"
+import { CatchedError, ControllerError } from "./errors.js"
 
 export class SuperReadableStream<R>  {
 
@@ -59,49 +60,13 @@ export class SuperReadableStream<R>  {
 
 export interface ResultableUnderlyingDefaultSource<R = unknown> {
   cancel?: (reason?: unknown) => Promiseable<Result<void, unknown>>;
-  pull?: (controller: SuperReadableStreamDefaultController<R>) => Promiseable<Result<void, unknown>>;
-  start?: (controller: SuperReadableStreamDefaultController<R>) => Promiseable<Result<void, unknown>>;
-}
-
-export class SuperReadableStreamDefaultController<R> implements ReadableStreamDefaultController<R> {
-
-  constructor(
-    readonly inner: ReadableStreamDefaultController<R>
-  ) { }
-
-  get desiredSize() {
-    return this.inner.desiredSize
-  }
-
-  close() {
-    this.inner.close()
-  }
-
-  enqueue(chunk?: R) {
-    this.inner.enqueue(chunk)
-  }
-
-  error(reason?: unknown) {
-    this.inner.error(StreamError.from(reason))
-  }
-
-  tryEnqueue(chunk?: R): Result<void, ControllerError> {
-    return tryEnqueue(this, chunk)
-  }
-
-  tryError(reason?: unknown): Result<void, ControllerError> {
-    return tryError(this, reason)
-  }
-
-  tryClose(): Result<void, ControllerError> {
-    return tryClose(this)
-  }
-
+  pull?: (controller: ReadableStreamDefaultController<R>) => Promiseable<Result<void, unknown>>;
+  start?: (controller: ReadableStreamDefaultController<R>) => Promiseable<Result<void, unknown>>;
 }
 
 export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<R> {
 
-  #controller: Option<SuperReadableStreamDefaultController<R>> = new None()
+  #controller: Option<ReadableStreamDefaultController<R>> = new None()
 
   constructor(
     readonly inner: ResultableUnderlyingDefaultSource<R>
@@ -113,18 +78,18 @@ export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<
 
   start(controller: ReadableStreamDefaultController<R>) {
     try {
-      this.#controller = new Some(new SuperReadableStreamDefaultController(controller))
+      this.#controller = new Some(controller)
 
       const promiseable = this.inner.start?.(this.controller)
 
       if (promiseable instanceof Promise)
         return promiseable
           .catch(CatchedError.fromAndThrow)
-          .then(StreamError.okOrFromAndThrow)
+          .then(Results.okOrThrow)
 
       if (promiseable === undefined)
         return
-      return StreamError.okOrFromAndThrow(promiseable)
+      return Results.okOrThrow(promiseable)
     } catch (e: unknown) {
       throw CatchedError.from(e)
     }
@@ -137,11 +102,11 @@ export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<
       if (promiseable instanceof Promise)
         return promiseable
           .catch(CatchedError.fromAndThrow)
-          .then(StreamError.okOrFromAndThrow)
+          .then(Results.okOrThrow)
 
       if (promiseable === undefined)
         return
-      return StreamError.okOrFromAndThrow(promiseable)
+      return Results.okOrThrow(promiseable)
     } catch (e: unknown) {
       throw CatchedError.from(e)
     }
@@ -154,9 +119,11 @@ export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<
       if (promiseable instanceof Promise)
         return promiseable
           .catch(CatchedError.fromAndThrow)
-          .then(StreamError.okOrFromAndThrow)
+          .then(Results.okOrThrow)
 
-      return Option.from(promiseable).mapSync(StreamError.okOrFromAndThrow).inner
+      if (promiseable === undefined)
+        return
+      return Results.okOrThrow(promiseable)
     } catch (e: unknown) {
       throw CatchedError.from(e)
     }

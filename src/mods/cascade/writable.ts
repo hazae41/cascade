@@ -1,8 +1,9 @@
 import { None, Option, Some } from "@hazae41/option"
 import { Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
+import { Results } from "libs/results/results.js"
 import { tryError } from "./cascade.js"
-import { CatchedError, ControllerError, StreamError } from "./errors.js"
+import { CatchedError, ControllerError } from "./errors.js"
 
 export class SuperWritableStream<W> {
 
@@ -48,33 +49,13 @@ export class SuperWritableStream<W> {
 export interface ResultableUnderlyingSink<W = unknown> {
   abort?: (reason?: unknown) => Promiseable<Result<void, unknown>>;
   close?: () => Promiseable<Result<void, unknown>>;
-  start?: (controller: SuperWritableStreamDefaultController) => Promiseable<Result<void, unknown>>;
-  write?: (chunk: W, controller: SuperWritableStreamDefaultController) => Promiseable<Result<void, unknown>>;
-}
-
-export class SuperWritableStreamDefaultController implements WritableStreamDefaultController {
-
-  constructor(
-    readonly inner: WritableStreamDefaultController
-  ) { }
-
-  get signal() {
-    return this.inner.signal
-  }
-
-  error(reason?: unknown) {
-    this.inner.error(StreamError.from(reason))
-  }
-
-  tryError(reason?: unknown): Result<void, ControllerError> {
-    return tryError(this, reason)
-  }
-
+  start?: (controller: WritableStreamDefaultController) => Promiseable<Result<void, unknown>>;
+  write?: (chunk: W, controller: WritableStreamDefaultController) => Promiseable<Result<void, unknown>>;
 }
 
 export class SuperUnderlyingSink<W> implements UnderlyingSink<W> {
 
-  #controller: Option<SuperWritableStreamDefaultController> = new None()
+  #controller: Option<WritableStreamDefaultController> = new None()
 
   constructor(
     readonly inner: ResultableUnderlyingSink<W>
@@ -86,18 +67,18 @@ export class SuperUnderlyingSink<W> implements UnderlyingSink<W> {
 
   start(controller: WritableStreamDefaultController) {
     try {
-      this.#controller = new Some(new SuperWritableStreamDefaultController(controller))
+      this.#controller = new Some(controller)
 
       const promiseable = this.inner.start?.(this.controller)
 
       if (promiseable instanceof Promise)
         return promiseable
-          .then(StreamError.okOrFromAndThrow)
           .catch(CatchedError.fromAndThrow)
+          .then(Results.okOrThrow)
 
       if (promiseable === undefined)
         return
-      return StreamError.okOrFromAndThrow(promiseable)
+      return Results.okOrThrow(promiseable)
     } catch (e: unknown) {
       throw CatchedError.from(e)
     }
@@ -110,11 +91,11 @@ export class SuperUnderlyingSink<W> implements UnderlyingSink<W> {
       if (promiseable instanceof Promise)
         return promiseable
           .catch(CatchedError.fromAndThrow)
-          .then(StreamError.okOrFromAndThrow)
+          .then(Results.okOrThrow)
 
       if (promiseable === undefined)
         return
-      return StreamError.okOrFromAndThrow(promiseable)
+      return Results.okOrThrow(promiseable)
     } catch (e: unknown) {
       throw CatchedError.from(e)
     }
@@ -127,11 +108,11 @@ export class SuperUnderlyingSink<W> implements UnderlyingSink<W> {
       if (promiseable instanceof Promise)
         return promiseable
           .catch(CatchedError.fromAndThrow)
-          .then(StreamError.okOrFromAndThrow)
+          .then(Results.okOrThrow)
 
       if (promiseable === undefined)
         return
-      return StreamError.okOrFromAndThrow(promiseable)
+      return Results.okOrThrow(promiseable)
     } catch (e: unknown) {
       throw CatchedError.from(e)
     }
@@ -144,11 +125,11 @@ export class SuperUnderlyingSink<W> implements UnderlyingSink<W> {
       if (promiseable instanceof Promise)
         return promiseable
           .catch(CatchedError.fromAndThrow)
-          .then(StreamError.okOrFromAndThrow)
+          .then(Results.okOrThrow)
 
       if (promiseable === undefined)
         return
-      return StreamError.okOrFromAndThrow(promiseable)
+      return Results.okOrThrow(promiseable)
     } catch (e: unknown) {
       throw CatchedError.from(e)
     }

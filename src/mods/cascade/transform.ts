@@ -1,8 +1,9 @@
 import { None, Option, Some } from "@hazae41/option"
 import { Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
+import { Results } from "libs/results/results.js"
 import { tryEnqueue, tryError, tryTerminate } from "./cascade.js"
-import { CatchedError, ControllerError, StreamError } from "./errors.js"
+import { CatchedError, ControllerError } from "./errors.js"
 
 export class SuperTransformStream<I, O>  {
 
@@ -60,50 +61,14 @@ export class SuperTransformStream<I, O>  {
 }
 
 export interface ResultableTransformer<I = unknown, O = unknown> {
-  flush?: (controller: SuperTransformStreamDefaultController<O>) => Promiseable<Result<void, unknown>>;
-  start?: (controller: SuperTransformStreamDefaultController<O>) => Promiseable<Result<void, unknown>>;
-  transform?: (chunk: I, controller: SuperTransformStreamDefaultController<O>) => Promiseable<Result<void, unknown>>;
-}
-
-export class SuperTransformStreamDefaultController<O> implements TransformStreamDefaultController<O> {
-
-  constructor(
-    readonly inner: TransformStreamDefaultController<O>
-  ) { }
-
-  get desiredSize() {
-    return this.inner.desiredSize
-  }
-
-  enqueue(chunk?: O): void {
-    this.inner.enqueue(chunk)
-  }
-
-  error(reason?: unknown): void {
-    this.inner.error(StreamError.from(reason))
-  }
-
-  terminate(): void {
-    this.inner.terminate()
-  }
-
-  tryEnqueue(chunk?: O): Result<void, ControllerError> {
-    return tryEnqueue(this, chunk)
-  }
-
-  tryError(reason?: unknown): Result<void, ControllerError> {
-    return tryError(this, reason)
-  }
-
-  tryTerminate(): Result<void, ControllerError> {
-    return tryTerminate(this)
-  }
-
+  flush?: (controller: TransformStreamDefaultController<O>) => Promiseable<Result<void, unknown>>;
+  start?: (controller: TransformStreamDefaultController<O>) => Promiseable<Result<void, unknown>>;
+  transform?: (chunk: I, controller: TransformStreamDefaultController<O>) => Promiseable<Result<void, unknown>>;
 }
 
 export class SuperTransformer<I, O> implements Transformer<I, O> {
 
-  #controller: Option<SuperTransformStreamDefaultController<O>> = new None()
+  #controller: Option<TransformStreamDefaultController<O>> = new None()
 
   constructor(
     readonly inner: ResultableTransformer<I, O>
@@ -115,18 +80,18 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
 
   start(controller: TransformStreamDefaultController<O>) {
     try {
-      this.#controller = new Some(new SuperTransformStreamDefaultController(controller))
+      this.#controller = new Some(controller)
 
       const promiseable = this.inner.start?.(this.controller)
 
       if (promiseable instanceof Promise)
         return promiseable
           .catch(CatchedError.fromAndThrow)
-          .then(StreamError.okOrFromAndThrow)
+          .then(Results.okOrThrow)
 
       if (promiseable === undefined)
         return
-      return StreamError.okOrFromAndThrow(promiseable)
+      return Results.okOrThrow(promiseable)
     } catch (e: unknown) {
       throw CatchedError.from(e)
     }
@@ -139,11 +104,11 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
       if (promiseable instanceof Promise)
         return promiseable
           .catch(CatchedError.fromAndThrow)
-          .then(StreamError.okOrFromAndThrow)
+          .then(Results.okOrThrow)
 
       if (promiseable === undefined)
         return
-      return StreamError.okOrFromAndThrow(promiseable)
+      return Results.okOrThrow(promiseable)
     } catch (e: unknown) {
       throw CatchedError.from(e)
     }
@@ -156,11 +121,11 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
       if (promiseable instanceof Promise)
         return promiseable
           .catch(CatchedError.fromAndThrow)
-          .then(StreamError.okOrFromAndThrow)
+          .then(Results.okOrThrow)
 
       if (promiseable === undefined)
         return
-      return StreamError.okOrFromAndThrow(promiseable)
+      return Results.okOrThrow(promiseable)
     } catch (e: unknown) {
       throw CatchedError.from(e)
     }
