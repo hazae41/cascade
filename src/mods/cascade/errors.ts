@@ -1,4 +1,4 @@
-import { Err, Ok, Result } from "@hazae41/result"
+import { Err } from "@hazae41/result"
 
 /**
  * Error returned from `tryEnqueue`, `tryError`, `tryClose`, `tryTerminate`
@@ -31,23 +31,13 @@ export class CatchedError extends Error {
 }
 
 /**
- * `Ok` good errors and `Err` bad ones
+ * `Err` good errors and throw bad ones
  * @param error 
- * @returns 
+ * @returns `Err(error)` if not `CatchedError` 
+ * @throws `error` if `CatchedError` 
  */
-export function filter(error: unknown): Result<unknown, unknown> {
+export function rethrow(error: unknown) {
   if (error instanceof CatchedError)
-    return new Err(error.cause)
-  return new Ok(error)
-}
-
-/**
- * Throw `result.inner` if `Err`, return `Err(result.inner)` if `Ok`
- * @param result 
- * @returns 
- */
-export function rethrow(result: Result<unknown, unknown>) {
-  if (result.isOk())
-    return new Err(result.get())
-  throw result.get()
+    throw error.cause
+  return new Err(error)
 }
