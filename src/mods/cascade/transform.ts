@@ -1,9 +1,9 @@
 import { None, Option, Some } from "@hazae41/option"
-import { Result } from "@hazae41/result"
+import { Catched, Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
 import { Results } from "libs/results/results.js"
 import { tryEnqueue, tryError, tryTerminate } from "./cascade.js"
-import { CatchedError, ControllerError } from "./errors.js"
+import { ControllerError } from "./errors.js"
 
 export class SuperTransformStream<I, O>  {
 
@@ -86,14 +86,14 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
 
       if (promiseable instanceof Promise)
         return promiseable
-          .catch(CatchedError.fromAndThrow)
+          .catch(Catched.fromAndThrow)
           .then(Results.okOrThrow)
 
       if (promiseable === undefined)
         return
       return Results.okOrThrow(promiseable)
     } catch (e: unknown) {
-      throw CatchedError.from(e)
+      throw Catched.from(e)
     }
   }
 
@@ -103,14 +103,14 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
 
       if (promiseable instanceof Promise)
         return promiseable
-          .catch(CatchedError.fromAndThrow)
+          .catch(Catched.fromAndThrow)
           .then(Results.okOrThrow)
 
       if (promiseable === undefined)
         return
       return Results.okOrThrow(promiseable)
     } catch (e: unknown) {
-      throw CatchedError.from(e)
+      throw Catched.from(e)
     }
   }
 
@@ -120,14 +120,14 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
 
       if (promiseable instanceof Promise)
         return promiseable
-          .catch(CatchedError.fromAndThrow)
+          .catch(Catched.fromAndThrow)
           .then(Results.okOrThrow)
 
       if (promiseable === undefined)
         return
       return Results.okOrThrow(promiseable)
     } catch (e: unknown) {
-      throw CatchedError.from(e)
+      throw Catched.from(e)
     }
   }
 
