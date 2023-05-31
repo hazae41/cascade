@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@hazae41/option": "^1.0.9",
-    "@hazae41/result": "^1.0.36"
+    "@hazae41/result": "^1.0.37"
   },
   "devDependencies": {
     "@hazae41/phobos": "^1.0.10",
