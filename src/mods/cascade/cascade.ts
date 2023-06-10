@@ -50,7 +50,7 @@ export function tryTerminate(terminateable: Terminateable): Result<void, Control
   }
 }
 
-export async function runWithWriter<W>(writable: WritableStream<W>, callback: (writer: WritableStreamDefaultWriter<W>) => Promiseable<void>) {
+export async function runWithWriter<W, T>(writable: WritableStream<W>, callback: (writer: WritableStreamDefaultWriter<W>) => Promiseable<T>) {
   const writer = writable.getWriter()
 
   try {
@@ -60,7 +60,7 @@ export async function runWithWriter<W>(writable: WritableStream<W>, callback: (w
   }
 }
 
-export function runWithWriterSync<W>(writable: WritableStream<W>, callback: (writer: WritableStreamDefaultWriter<W>) => void) {
+export function runWithWriterSync<W, T>(writable: WritableStream<W>, callback: (writer: WritableStreamDefaultWriter<W>) => T) {
   const writer = writable.getWriter()
 
   try {
