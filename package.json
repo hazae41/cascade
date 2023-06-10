@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@hazae41/cascade",
-  "version": "1.1.24",
+  "version": "1.1.25",
   "description": "Utilities to deal with streams",
   "homepage": "https://github.com/hazae41/cascade",
   "repository": "github:hazae41/cascade",
