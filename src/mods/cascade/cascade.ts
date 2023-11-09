@@ -87,4 +87,19 @@ export class Writer<T> {
 
 }
 
+export class Reader<T> {
+
+  constructor(
+    readonly inner: ReadableStreamDefaultReader<T>
+  ) { }
+
+  static from<T>(readable: ReadableStream<T>) {
+    return new Reader(readable.getReader())
+  }
+
+  [Symbol.dispose]() {
+    this.inner.releaseLock()
+  }
+
+}
 
