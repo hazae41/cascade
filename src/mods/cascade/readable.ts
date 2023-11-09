@@ -76,57 +76,27 @@ export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<
     return this.#controller.unwrap()
   }
 
-  start(controller: ReadableStreamDefaultController<R>) {
-    try {
-      this.#controller = new Some(controller)
+  async start(controller: ReadableStreamDefaultController<R>) {
+    this.#controller = new Some(controller)
 
-      const promiseable = this.inner.start?.(this.controller)
-
-      if (promiseable instanceof Promise)
-        return promiseable
-          .catch(Catched.fromAndThrow)
-          .then(Results.okOrThrow)
-
-      if (promiseable === undefined)
-        return
-      return Results.okOrThrow(promiseable)
-    } catch (e: unknown) {
-      throw Catched.from(e)
-    }
+    return await Promise
+      .resolve(this.inner.start?.(this.controller))
+      .catch(Catched.fromAndThrow)
+      .then(Results.okOrThrow)
   }
 
-  pull(controller: ReadableStreamDefaultController<R>) {
-    try {
-      const promiseable = this.inner.pull?.(this.controller)
-
-      if (promiseable instanceof Promise)
-        return promiseable
-          .catch(Catched.fromAndThrow)
-          .then(Results.okOrThrow)
-
-      if (promiseable === undefined)
-        return
-      return Results.okOrThrow(promiseable)
-    } catch (e: unknown) {
-      throw Catched.from(e)
-    }
+  async pull() {
+    return await Promise
+      .resolve(this.inner.pull?.(this.controller))
+      .catch(Catched.fromAndThrow)
+      .then(Results.okOrThrow)
   }
 
-  cancel(reason?: unknown) {
-    try {
-      const promiseable = this.inner.cancel?.(reason)
-
-      if (promiseable instanceof Promise)
-        return promiseable
-          .catch(Catched.fromAndThrow)
-          .then(Results.okOrThrow)
-
-      if (promiseable === undefined)
-        return
-      return Results.okOrThrow(promiseable)
-    } catch (e: unknown) {
-      throw Catched.from(e)
-    }
+  async cancel(reason?: unknown) {
+    return await Promise
+      .resolve(this.inner.cancel?.(reason))
+      .catch(Catched.fromAndThrow)
+      .then(Results.okOrThrow)
   }
 
 }

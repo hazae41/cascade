@@ -78,57 +78,27 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
     return this.#controller.unwrap()
   }
 
-  start(controller: TransformStreamDefaultController<O>) {
-    try {
-      this.#controller = new Some(controller)
+  async start(controller: TransformStreamDefaultController<O>) {
+    this.#controller = new Some(controller)
 
-      const promiseable = this.inner.start?.(this.controller)
-
-      if (promiseable instanceof Promise)
-        return promiseable
-          .catch(Catched.fromAndThrow)
-          .then(Results.okOrThrow)
-
-      if (promiseable === undefined)
-        return
-      return Results.okOrThrow(promiseable)
-    } catch (e: unknown) {
-      throw Catched.from(e)
-    }
+    return await Promise
+      .resolve(this.inner.start?.(this.controller))
+      .catch(Catched.fromAndThrow)
+      .then(Results.okOrThrow)
   }
 
-  transform(chunk: I) {
-    try {
-      const promiseable = this.inner.transform?.(chunk, this.controller)
-
-      if (promiseable instanceof Promise)
-        return promiseable
-          .catch(Catched.fromAndThrow)
-          .then(Results.okOrThrow)
-
-      if (promiseable === undefined)
-        return
-      return Results.okOrThrow(promiseable)
-    } catch (e: unknown) {
-      throw Catched.from(e)
-    }
+  async transform(chunk: I) {
+    return await Promise
+      .resolve(this.inner.transform?.(chunk, this.controller))
+      .catch(Catched.fromAndThrow)
+      .then(Results.okOrThrow)
   }
 
-  flush() {
-    try {
-      const promiseable = this.inner.flush?.(this.controller)
-
-      if (promiseable instanceof Promise)
-        return promiseable
-          .catch(Catched.fromAndThrow)
-          .then(Results.okOrThrow)
-
-      if (promiseable === undefined)
-        return
-      return Results.okOrThrow(promiseable)
-    } catch (e: unknown) {
-      throw Catched.from(e)
-    }
+  async flush() {
+    return await Promise
+      .resolve(this.inner.flush?.(this.controller))
+      .catch(Catched.fromAndThrow)
+      .then(Results.okOrThrow)
   }
 
 }

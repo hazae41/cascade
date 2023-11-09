@@ -65,74 +65,34 @@ export class SuperUnderlyingSink<W> implements UnderlyingSink<W> {
     return this.#controller.unwrap()
   }
 
-  start(controller: WritableStreamDefaultController) {
-    try {
-      this.#controller = new Some(controller)
+  async start(controller: WritableStreamDefaultController) {
+    this.#controller = new Some(controller)
 
-      const promiseable = this.inner.start?.(this.controller)
-
-      if (promiseable instanceof Promise)
-        return promiseable
-          .catch(Catched.fromAndThrow)
-          .then(Results.okOrThrow)
-
-      if (promiseable === undefined)
-        return
-      return Results.okOrThrow(promiseable)
-    } catch (e: unknown) {
-      throw Catched.from(e)
-    }
+    return await Promise
+      .resolve(this.inner.start?.(this.controller))
+      .catch(Catched.fromAndThrow)
+      .then(Results.okOrThrow)
   }
 
-  write(chunk: W) {
-    try {
-      const promiseable = this.inner.write?.(chunk, this.controller)
-
-      if (promiseable instanceof Promise)
-        return promiseable
-          .catch(Catched.fromAndThrow)
-          .then(Results.okOrThrow)
-
-      if (promiseable === undefined)
-        return
-      return Results.okOrThrow(promiseable)
-    } catch (e: unknown) {
-      throw Catched.from(e)
-    }
+  async write(chunk: W) {
+    return await Promise
+      .resolve(this.inner.write?.(chunk, this.controller))
+      .catch(Catched.fromAndThrow)
+      .then(Results.okOrThrow)
   }
 
-  abort(reason?: unknown) {
-    try {
-      const promiseable = this.inner.abort?.(reason)
-
-      if (promiseable instanceof Promise)
-        return promiseable
-          .catch(Catched.fromAndThrow)
-          .then(Results.okOrThrow)
-
-      if (promiseable === undefined)
-        return
-      return Results.okOrThrow(promiseable)
-    } catch (e: unknown) {
-      throw Catched.from(e)
-    }
+  async abort(reason?: unknown) {
+    return await Promise
+      .resolve(this.inner.abort?.(reason))
+      .catch(Catched.fromAndThrow)
+      .then(Results.okOrThrow)
   }
 
-  close() {
-    try {
-      const promiseable = this.inner.close?.()
-
-      if (promiseable instanceof Promise)
-        return promiseable
-          .catch(Catched.fromAndThrow)
-          .then(Results.okOrThrow)
-
-      if (promiseable === undefined)
-        return
-      return Results.okOrThrow(promiseable)
-    } catch (e: unknown) {
-      throw Catched.from(e)
-    }
+  async close() {
+    return await Promise
+      .resolve(this.inner.close?.())
+      .catch(Catched.fromAndThrow)
+      .then(Results.okOrThrow)
   }
 
 }
