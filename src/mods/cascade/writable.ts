@@ -1,7 +1,7 @@
 import { None, Option, Some } from "@hazae41/option"
 import { Catched, Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
-import { Results } from "libs/results/results.js"
+import { Resultable } from "libs/results/results.js"
 import { tryError } from "./cascade.js"
 import { ControllerError } from "./errors.js"
 
@@ -47,10 +47,10 @@ export class SuperWritableStream<W> {
 }
 
 export interface ResultableUnderlyingSink<W = unknown> {
-  abort?: (reason?: unknown) => Promiseable<Result<void, unknown>>;
-  close?: () => Promiseable<Result<void, unknown>>;
-  start?: (controller: WritableStreamDefaultController) => Promiseable<Result<void, unknown>>;
-  write?: (chunk: W, controller: WritableStreamDefaultController) => Promiseable<Result<void, unknown>>;
+  abort?: (reason?: unknown) => Promiseable<Resultable<void, unknown>>
+  close?: () => Promiseable<Resultable<void, unknown>>
+  start?: (controller: WritableStreamDefaultController) => Promiseable<Resultable<void, unknown>>
+  write?: (chunk: W, controller: WritableStreamDefaultController) => Promiseable<Resultable<void, unknown>>
 }
 
 export class SuperUnderlyingSink<W> implements UnderlyingSink<W> {
@@ -71,28 +71,28 @@ export class SuperUnderlyingSink<W> implements UnderlyingSink<W> {
     return await Promise
       .resolve(this.inner.start?.(this.controller))
       .catch(Catched.fromAndThrow)
-      .then(Results.okOrThrow)
+      .then(Resultable.okOrThrow)
   }
 
   async write(chunk: W) {
     return await Promise
       .resolve(this.inner.write?.(chunk, this.controller))
       .catch(Catched.fromAndThrow)
-      .then(Results.okOrThrow)
+      .then(Resultable.okOrThrow)
   }
 
   async abort(reason?: unknown) {
     return await Promise
       .resolve(this.inner.abort?.(reason))
       .catch(Catched.fromAndThrow)
-      .then(Results.okOrThrow)
+      .then(Resultable.okOrThrow)
   }
 
   async close() {
     return await Promise
       .resolve(this.inner.close?.())
       .catch(Catched.fromAndThrow)
-      .then(Results.okOrThrow)
+      .then(Resultable.okOrThrow)
   }
 
 }

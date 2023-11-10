@@ -1,7 +1,7 @@
 import { None, Option, Some } from "@hazae41/option"
 import { Catched, Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
-import { Results } from "libs/results/results.js"
+import { Resultable } from "libs/results/results.js"
 import { tryEnqueue, tryError, tryTerminate } from "./cascade.js"
 import { ControllerError } from "./errors.js"
 
@@ -61,9 +61,9 @@ export class SuperTransformStream<I, O>  {
 }
 
 export interface ResultableTransformer<I = unknown, O = unknown> {
-  flush?: (controller: TransformStreamDefaultController<O>) => Promiseable<Result<void, unknown>>;
-  start?: (controller: TransformStreamDefaultController<O>) => Promiseable<Result<void, unknown>>;
-  transform?: (chunk: I, controller: TransformStreamDefaultController<O>) => Promiseable<Result<void, unknown>>;
+  flush?: (controller: TransformStreamDefaultController<O>) => Promiseable<Resultable<void, unknown>>
+  start?: (controller: TransformStreamDefaultController<O>) => Promiseable<Resultable<void, unknown>>
+  transform?: (chunk: I, controller: TransformStreamDefaultController<O>) => Promiseable<Resultable<void, unknown>>
 }
 
 export class SuperTransformer<I, O> implements Transformer<I, O> {
@@ -84,21 +84,21 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
     return await Promise
       .resolve(this.inner.start?.(this.controller))
       .catch(Catched.fromAndThrow)
-      .then(Results.okOrThrow)
+      .then(Resultable.okOrThrow)
   }
 
   async transform(chunk: I) {
     return await Promise
       .resolve(this.inner.transform?.(chunk, this.controller))
       .catch(Catched.fromAndThrow)
-      .then(Results.okOrThrow)
+      .then(Resultable.okOrThrow)
   }
 
   async flush() {
     return await Promise
       .resolve(this.inner.flush?.(this.controller))
       .catch(Catched.fromAndThrow)
-      .then(Results.okOrThrow)
+      .then(Resultable.okOrThrow)
   }
 
 }

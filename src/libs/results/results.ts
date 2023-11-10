@@ -1,13 +1,15 @@
-import { Result } from "@hazae41/result"
+import { Err, Ok, Result } from "@hazae41/result"
 
-export namespace Results {
+export type Resultable<T, E> = T | Result<T, E>
 
-  export function okOrThrow<T>(result?: Result<T, unknown>) {
-    if (result == null)
-      return
-    if (result.isOk())
+export namespace Resultable {
+
+  export function okOrThrow<T, E>(result: Resultable<T, E>) {
+    if (result instanceof Ok)
       return result.get()
-    throw result.get()
+    if (result instanceof Err)
+      throw result.get()
+    return result
   }
 
 }
