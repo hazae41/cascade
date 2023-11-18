@@ -1,5 +1,5 @@
 import { None, Option, Some } from "@hazae41/option"
-import { Catched, Result } from "@hazae41/result"
+import { Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
 import { Resultable } from "libs/results/results.js"
 import { tryEnqueue, tryError, tryTerminate } from "./cascade.js"
@@ -83,22 +83,19 @@ export class SuperTransformer<I, O> implements Transformer<I, O> {
 
     return await Promise
       .resolve(this.inner.start?.(this.controller))
-      .catch(Catched.fromAndThrow)
-      .then(Resultable.okOrThrow)
+      .then(r => r?.unwrap())
   }
 
   async transform(chunk: I) {
     return await Promise
       .resolve(this.inner.transform?.(chunk, this.controller))
-      .catch(Catched.fromAndThrow)
-      .then(Resultable.okOrThrow)
+      .then(r => r?.unwrap())
   }
 
   async flush() {
     return await Promise
       .resolve(this.inner.flush?.(this.controller))
-      .catch(Catched.fromAndThrow)
-      .then(Resultable.okOrThrow)
+      .then(r => r?.unwrap())
   }
 
 }

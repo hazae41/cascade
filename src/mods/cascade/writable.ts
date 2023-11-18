@@ -1,5 +1,5 @@
 import { None, Option, Some } from "@hazae41/option"
-import { Catched, Result } from "@hazae41/result"
+import { Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
 import { Resultable } from "libs/results/results.js"
 import { tryError } from "./cascade.js"
@@ -70,29 +70,25 @@ export class SuperUnderlyingSink<W> implements UnderlyingSink<W> {
 
     return await Promise
       .resolve(this.inner.start?.(this.controller))
-      .catch(Catched.fromAndThrow)
-      .then(Resultable.okOrThrow)
+      .then(r => r?.unwrap())
   }
 
   async write(chunk: W) {
     return await Promise
       .resolve(this.inner.write?.(chunk, this.controller))
-      .catch(Catched.fromAndThrow)
-      .then(Resultable.okOrThrow)
+      .then(r => r?.unwrap())
   }
 
   async abort(reason?: unknown) {
     return await Promise
       .resolve(this.inner.abort?.(reason))
-      .catch(Catched.fromAndThrow)
-      .then(Resultable.okOrThrow)
+      .then(r => r?.unwrap())
   }
 
   async close() {
     return await Promise
       .resolve(this.inner.close?.())
-      .catch(Catched.fromAndThrow)
-      .then(Resultable.okOrThrow)
+      .then(r => r?.unwrap())
   }
 
 }

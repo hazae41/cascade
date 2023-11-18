@@ -1,5 +1,5 @@
 import { None, Option, Some } from "@hazae41/option"
-import { Catched, Result } from "@hazae41/result"
+import { Result } from "@hazae41/result"
 import { Promiseable } from "libs/promises/promiseable.js"
 import { Resultable } from "libs/results/results.js"
 import { tryClose, tryEnqueue, tryError } from "./cascade.js"
@@ -81,22 +81,19 @@ export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<
 
     return await Promise
       .resolve(this.inner.start?.(this.controller))
-      .catch(Catched.fromAndThrow)
-      .then(Resultable.okOrThrow)
+      .then(r => r?.unwrap())
   }
 
   async pull() {
     return await Promise
       .resolve(this.inner.pull?.(this.controller))
-      .catch(Catched.fromAndThrow)
-      .then(Resultable.okOrThrow)
+      .then(r => r?.unwrap())
   }
 
   async cancel(reason?: unknown) {
     return await Promise
       .resolve(this.inner.cancel?.(reason))
-      .catch(Catched.fromAndThrow)
-      .then(Resultable.okOrThrow)
+      .then(r => r?.unwrap())
   }
 
 }
