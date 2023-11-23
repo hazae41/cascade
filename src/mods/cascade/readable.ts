@@ -1,9 +1,3 @@
-import { None, Option, Some } from "@hazae41/option"
-import { Result } from "@hazae41/result"
-import { Promiseable } from "libs/promises/promiseable.js"
-import { Resultable } from "libs/results/results.js"
-import { tryClose, tryEnqueue, tryError } from "./cascade.js"
-import { ControllerError } from "./errors.js"
 
 export class SuperReadableStream<R>  {
 
@@ -17,7 +11,7 @@ export class SuperReadableStream<R>  {
    * @param strategy 
    */
   constructor(
-    readonly subsource: ResultableUnderlyingDefaultSource<R>,
+    readonly subsource: UnderlyingDefaultSource<R>,
     readonly strategy?: QueuingStrategy<R>
   ) {
     this.source = new SuperUnderlyingDefaultSource(subsource)
@@ -44,56 +38,34 @@ export class SuperReadableStream<R>  {
     this.controller.close()
   }
 
-  tryEnqueue(chunk?: R): Result<void, ControllerError> {
-    return tryEnqueue(this, chunk)
-  }
-
-  tryError(reason?: unknown): Result<void, ControllerError> {
-    return tryError(this, reason)
-  }
-
-  tryClose(): Result<void, ControllerError> {
-    return tryClose(this)
-  }
-
-}
-
-export interface ResultableUnderlyingDefaultSource<R = unknown> {
-  cancel?: (reason?: unknown) => Promiseable<Resultable<void, unknown>>
-  pull?: (controller: ReadableStreamDefaultController<R>) => Promiseable<Resultable<void, unknown>>
-  start?: (controller: ReadableStreamDefaultController<R>) => Promiseable<Resultable<void, unknown>>
 }
 
 export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<R> {
 
-  #controller: Option<ReadableStreamDefaultController<R>> = new None()
+  #controller?: ReadableStreamDefaultController<R>
 
   constructor(
-    readonly inner: ResultableUnderlyingDefaultSource<R>
+    readonly inner: UnderlyingDefaultSource<R>
   ) { }
 
   get controller() {
-    return this.#controller.unwrap()
+    if (this.#controller == null)
+      throw new Error("Controller not set")
+    return this.#controller
   }
 
   async start(controller: ReadableStreamDefaultController<R>) {
-    this.#controller = new Some(controller)
+    this.#controller = controller
 
-    return await Promise
-      .resolve(this.inner.start?.(this.controller))
-      .then(r => r?.unwrap())
+    return this.inner.start?.(this.controller)
   }
 
   async pull() {
-    return await Promise
-      .resolve(this.inner.pull?.(this.controller))
-      .then(r => r?.unwrap())
+    return this.inner.pull?.(this.controller)
   }
 
   async cancel(reason?: unknown) {
-    return await Promise
-      .resolve(this.inner.cancel?.(reason))
-      .then(r => r?.unwrap())
+    return this.inner.cancel?.(reason)
   }
 
 }

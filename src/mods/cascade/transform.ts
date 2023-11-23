@@ -1,9 +1,3 @@
-import { None, Option, Some } from "@hazae41/option"
-import { Result } from "@hazae41/result"
-import { Promiseable } from "libs/promises/promiseable.js"
-import { Resultable } from "libs/results/results.js"
-import { tryEnqueue, tryError, tryTerminate } from "./cascade.js"
-import { ControllerError } from "./errors.js"
 
 export class SuperTransformStream<I, O>  {
 
@@ -18,7 +12,7 @@ export class SuperTransformStream<I, O>  {
    * @param readableStrategy 
    */
   constructor(
-    readonly subtransformer: ResultableTransformer<I, O>,
+    readonly subtransformer: Transformer<I, O>,
     readonly writableStrategy?: QueuingStrategy<I>,
     readonly readableStrategy?: QueuingStrategy<O>
   ) {
@@ -46,56 +40,34 @@ export class SuperTransformStream<I, O>  {
     return this.controller.terminate()
   }
 
-  tryEnqueue(chunk?: O): Result<void, ControllerError> {
-    return tryEnqueue(this, chunk)
-  }
-
-  tryError(reason?: unknown): Result<void, ControllerError> {
-    return tryError(this, reason)
-  }
-
-  tryTerminate(): Result<void, ControllerError> {
-    return tryTerminate(this)
-  }
-
-}
-
-export interface ResultableTransformer<I = unknown, O = unknown> {
-  flush?: (controller: TransformStreamDefaultController<O>) => Promiseable<Resultable<void, unknown>>
-  start?: (controller: TransformStreamDefaultController<O>) => Promiseable<Resultable<void, unknown>>
-  transform?: (chunk: I, controller: TransformStreamDefaultController<O>) => Promiseable<Resultable<void, unknown>>
 }
 
 export class SuperTransformer<I, O> implements Transformer<I, O> {
 
-  #controller: Option<TransformStreamDefaultController<O>> = new None()
+  #controller?: TransformStreamDefaultController<O>
 
   constructor(
-    readonly inner: ResultableTransformer<I, O>
+    readonly inner: Transformer<I, O>
   ) { }
 
   get controller() {
-    return this.#controller.unwrap()
+    if (this.#controller == null)
+      throw new Error("Controller not set")
+    return this.#controller
   }
 
   async start(controller: TransformStreamDefaultController<O>) {
-    this.#controller = new Some(controller)
+    this.#controller = controller
 
-    return await Promise
-      .resolve(this.inner.start?.(this.controller))
-      .then(r => r?.unwrap())
+    return this.inner.start?.(this.controller)
   }
 
   async transform(chunk: I) {
-    return await Promise
-      .resolve(this.inner.transform?.(chunk, this.controller))
-      .then(r => r?.unwrap())
+    return this.inner.transform?.(chunk, this.controller)
   }
 
   async flush() {
-    return await Promise
-      .resolve(this.inner.flush?.(this.controller))
-      .then(r => r?.unwrap())
+    return this.inner.flush?.(this.controller)
   }
 
 }

@@ -1,9 +1,3 @@
-import { None, Option, Some } from "@hazae41/option"
-import { Result } from "@hazae41/result"
-import { Promiseable } from "libs/promises/promiseable.js"
-import { Resultable } from "libs/results/results.js"
-import { tryError } from "./cascade.js"
-import { ControllerError } from "./errors.js"
 
 export class SuperWritableStream<W> {
 
@@ -17,7 +11,7 @@ export class SuperWritableStream<W> {
    * @param strategy 
    */
   constructor(
-    readonly subsink: ResultableUnderlyingSink<W>,
+    readonly subsink: UnderlyingSink<W>,
     readonly strategy?: QueuingStrategy<W>
   ) {
     this.sink = new SuperUnderlyingSink(subsink)
@@ -40,55 +34,38 @@ export class SuperWritableStream<W> {
     this.controller.error(reason)
   }
 
-  tryError(reason?: unknown): Result<void, ControllerError> {
-    return tryError(this, reason)
-  }
-
-}
-
-export interface ResultableUnderlyingSink<W = unknown> {
-  abort?: (reason?: unknown) => Promiseable<Resultable<void, unknown>>
-  close?: () => Promiseable<Resultable<void, unknown>>
-  start?: (controller: WritableStreamDefaultController) => Promiseable<Resultable<void, unknown>>
-  write?: (chunk: W, controller: WritableStreamDefaultController) => Promiseable<Resultable<void, unknown>>
 }
 
 export class SuperUnderlyingSink<W> implements UnderlyingSink<W> {
 
-  #controller: Option<WritableStreamDefaultController> = new None()
+  #controller?: WritableStreamDefaultController
 
   constructor(
-    readonly inner: ResultableUnderlyingSink<W>
+    readonly inner: UnderlyingSink<W>
   ) { }
 
   get controller() {
-    return this.#controller.unwrap()
+    if (this.#controller == null)
+      throw new Error("Controller not set")
+    return this.#controller
   }
 
   async start(controller: WritableStreamDefaultController) {
-    this.#controller = new Some(controller)
+    this.#controller = controller
 
-    return await Promise
-      .resolve(this.inner.start?.(this.controller))
-      .then(r => r?.unwrap())
+    return this.inner.start?.(this.controller)
   }
 
   async write(chunk: W) {
-    return await Promise
-      .resolve(this.inner.write?.(chunk, this.controller))
-      .then(r => r?.unwrap())
+    return this.inner.write?.(chunk, this.controller)
   }
 
   async abort(reason?: unknown) {
-    return await Promise
-      .resolve(this.inner.abort?.(reason))
-      .then(r => r?.unwrap())
+    return this.inner.abort?.(reason)
   }
 
   async close() {
-    return await Promise
-      .resolve(this.inner.close?.())
-      .then(r => r?.unwrap())
+    return this.inner.close?.()
   }
 
 }
