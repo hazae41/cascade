@@ -8,6 +8,10 @@ npm i @hazae41/cascade
 
 [**Node Package 📦**](https://www.npmjs.com/package/@hazae41/cascade)
 
+## Why
+
+It took me 1 year to manage JavaScript streams in such a way as to avoid headaches, fortunately you can skip this and never get any headache (and even avoid Safari bugs!)
+
 ## Features
 
 ### Current features
