@@ -1,18 +1,7 @@
 import { None } from "@hazae41/option"
 import { SuperEventTarget } from "@hazae41/plume"
+import { CloseEvents, ErrorEvents, OpenEvents } from "libs/events/events.js"
 import { Simplex } from "./simplex.js"
-
-export type OpenEvents = {
-  open: () => void
-}
-
-export type CloseEvents = {
-  close: () => void
-}
-
-export type ErrorEvents = {
-  error: (reason?: unknown) => void
-}
 
 /**
  * A pair of simplexes that are NOT connected to each other
@@ -40,6 +29,11 @@ export class FullDuplex<I, O> {
   }
 }
 
+export type HalfDuplexEvents =
+  & OpenEvents
+  & CloseEvents
+  & ErrorEvents
+
 /**
  * A pair of simplexes that are connected to each other
  */
@@ -50,7 +44,7 @@ export class HalfDuplex<I, O> {
   readonly input: Simplex<I>
   readonly output: Simplex<O>
 
-  readonly events = new SuperEventTarget<OpenEvents & CloseEvents & ErrorEvents>()
+  readonly events = new SuperEventTarget<HalfDuplexEvents>()
 
   #starting = false
   #started = false

@@ -1,25 +1,6 @@
 import { SuperEventTarget } from "@hazae41/plume"
+import { CloseEvents, ErrorEvents, FlushEvents, MessageEvents, OpenEvents } from "libs/events/events.js"
 import { SuperTransformStream } from "../streams/transform.js"
-
-export type OpenEvents = {
-  open: () => void
-}
-
-export type CloseEvents = {
-  close: () => void
-}
-
-export type ErrorEvents = {
-  error: (reason?: unknown) => void
-}
-
-export type MessageEvents<T> = {
-  message: (data: T) => void
-}
-
-export type FlushEvents = {
-  flush: () => void
-}
 
 export type SimplexEvents<T> =
   & OpenEvents
@@ -42,7 +23,7 @@ export class Simplex<T>  {
 
   constructor() {
     const start = this.#onStart.bind(this)
-    const transform = this.#onMessage.bind(this)
+    const transform = this.#onTransform.bind(this)
     const flush = this.#onFlush.bind(this)
 
     this.stream = new SuperTransformStream<T, T>({ start, transform, flush })
@@ -93,7 +74,7 @@ export class Simplex<T>  {
     this.#closed = { reason }
   }
 
-  async #onMessage(data: T) {
+  async #onTransform(data: T) {
     await this.events.emit("message", [data])
   }
 

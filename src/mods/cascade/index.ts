@@ -1,5 +1,3 @@
-export * from "./errors.js";
-export * from "./streams/readable.js";
-export * from "./streams/transform.js";
-export * from "./streams/writable.js";
+export * from "./plexes/index.js";
+export * from "./streams/index.js";
 
