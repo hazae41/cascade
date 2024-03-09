@@ -10,7 +10,7 @@ npm i @hazae41/cascade
 
 ## Why
 
-It took me 1 year to manage JavaScript streams in such a way as to avoid headaches, fortunately you can skip this and never get any headache (and even avoid Safari bugs!)
+It took me 1 year to manage JavaScript streams in such a way as to avoid headaches, fortunately you can skip this struggle and never get any headache (and even avoid Safari bugs!)
 
 ## Features
 
