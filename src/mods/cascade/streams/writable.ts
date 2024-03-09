@@ -1,12 +1,13 @@
+import { Future } from "@hazae41/future"
 
 export class SuperWritableStream<W> {
 
   readonly sink: SuperUnderlyingSink<W>
 
-  closed?: { reason?: unknown }
+  readonly substream: WritableStream<W>
 
   /**
-   * Like a WritableStream but with a getter to its controller and a "closed" field
+   * Like a WritableStream but with a getter to its controller
    * @param subsink 
    * @param strategy 
    */
@@ -15,49 +16,51 @@ export class SuperWritableStream<W> {
     readonly strategy?: QueuingStrategy<W>
   ) {
     this.sink = new SuperUnderlyingSink(subsink)
+    this.substream = new WritableStream(this.sink, strategy)
   }
 
   get controller() {
     return this.sink.controller
   }
 
-  start() {
-    const { sink, strategy } = this
-    return new WritableStream(sink, strategy)
-  }
-
   get signal() {
-    return this.controller.signal
+    return this.#signal()
   }
 
-  error(reason?: unknown) {
-    this.controller.error(reason)
+  async #signal() {
+    const controller = await this.controller
+
+    return controller.signal
+  }
+
+  async error(reason?: unknown) {
+    const controller = await this.controller
+
+    controller.error(reason)
   }
 
 }
 
 export class SuperUnderlyingSink<W> implements UnderlyingSink<W> {
 
-  #controller?: WritableStreamDefaultController
+  #controller = new Future<WritableStreamDefaultController>()
 
   constructor(
     readonly inner: UnderlyingSink<W>
   ) { }
 
   get controller() {
-    if (this.#controller == null)
-      throw new Error("Controller not set")
-    return this.#controller
+    return this.#controller.promise
   }
 
   async start(controller: WritableStreamDefaultController) {
-    this.#controller = controller
+    this.#controller.resolve(controller)
 
-    return this.inner.start?.(this.controller)
+    return this.inner.start?.(controller)
   }
 
   async write(chunk: W) {
-    return this.inner.write?.(chunk, this.controller)
+    return this.inner.write?.(chunk, await this.controller)
   }
 
   async abort(reason?: unknown) {

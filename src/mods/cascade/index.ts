@@ -1,5 +1,5 @@
 export * from "./errors.js";
-export * from "./readable.js";
-export * from "./transform.js";
-export * from "./writable.js";
+export * from "./streams/readable.js";
+export * from "./streams/transform.js";
+export * from "./streams/writable.js";
 

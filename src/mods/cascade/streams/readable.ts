@@ -1,12 +1,13 @@
+import { Future } from "@hazae41/future"
 
 export class SuperReadableStream<R>  {
 
   readonly source: SuperUnderlyingDefaultSource<R>
 
-  closed?: { reason?: unknown }
+  readonly substream: ReadableStream<R>
 
   /**
-   * Like a ReadableStream but with a getter to its controller and a "closed" field
+   * Like a ReadableStream but with a getter to its controller
    * @param subsource 
    * @param strategy 
    */
@@ -15,53 +16,52 @@ export class SuperReadableStream<R>  {
     readonly strategy?: QueuingStrategy<R>
   ) {
     this.source = new SuperUnderlyingDefaultSource(subsource)
+    this.substream = new ReadableStream(this.source, strategy)
   }
 
   get controller() {
     return this.source.controller
   }
 
-  start() {
-    const { source, strategy } = this
-    return new ReadableStream(source, strategy)
+  async enqueue(chunk?: R) {
+    const controller = await this.controller
+
+    controller.enqueue(chunk)
   }
 
-  enqueue(chunk?: R) {
-    this.controller.enqueue(chunk)
+  async error(reason?: unknown) {
+    const controller = await this.controller
+
+    controller.error(reason)
   }
 
-  error(reason?: unknown) {
-    this.controller.error(reason)
-  }
+  async close() {
+    const controller = await this.controller
 
-  close() {
-    this.controller.close()
+    controller.close()
   }
 
 }
 
 export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<R> {
 
-  #controller?: ReadableStreamDefaultController<R>
+  #controller = new Future<ReadableStreamDefaultController<R>>()
 
   constructor(
     readonly inner: UnderlyingDefaultSource<R>
   ) { }
 
   get controller() {
-    if (this.#controller == null)
-      throw new Error("Controller not set")
-    return this.#controller
+    return this.#controller.promise
   }
 
   async start(controller: ReadableStreamDefaultController<R>) {
-    this.#controller = controller
-
-    return this.inner.start?.(this.controller)
+    this.#controller.resolve(controller)
+    return this.inner.start?.(controller)
   }
 
   async pull() {
-    return this.inner.pull?.(this.controller)
+    return this.inner.pull?.(await this.controller)
   }
 
   async cancel(reason?: unknown) {
