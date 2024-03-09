@@ -1,5 +1,7 @@
 # Cascade
 
+Never let streams give you a headache again
+
 ```bash
 npm i @hazae41/cascade
 ```
@@ -11,8 +13,8 @@ npm i @hazae41/cascade
 ### Current features
 - 100% TypeScript and ESM
 - No external dependencies
-- Use stream.controller to get the controller
-- Use stream.closed to check if the stream is closed (and the reason)
+- No need for controller access
+- Simplex, Half-Duplex, Full-Duplex
 
 ## Usage
 
