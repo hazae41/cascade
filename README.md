@@ -166,7 +166,7 @@ This is useful when you do not want to keep one side open
 You also have duplex events
 - open — called when input or output is started
 - close — called when input or output is closed
-— error — called when input or output is errored
+- error — called when input or output is errored
 
 ```tsx
 class MySocket {
