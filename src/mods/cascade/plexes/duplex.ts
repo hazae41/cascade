@@ -36,14 +36,14 @@ export type HalfDuplexEvents =
 /**
  * A pair of simplexes that are connected to each other
  */
-export class HalfDuplex<I, O, M extends HalfDuplexEvents = HalfDuplexEvents> {
+export class HalfDuplex<I, O> {
   readonly inner: ReadableWritablePair<O, I>
   readonly outer: ReadableWritablePair<I, O>
 
   readonly input: Simplex<I>
   readonly output: Simplex<O>
 
-  readonly events = new SuperEventTarget<M>()
+  readonly events = new SuperEventTarget<HalfDuplexEvents>()
 
   #closing?: { reason?: unknown }
   #closed?: { reason?: unknown }
