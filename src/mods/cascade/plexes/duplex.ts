@@ -1,6 +1,6 @@
 import { None } from "@hazae41/option"
 import { SuperEventTarget } from "@hazae41/plume"
-import { CloseEvents, ErrorEvents, OpenEvents } from "mods/cascade/plexes/events.js"
+import { CloseEvents, ErrorEvents } from "mods/cascade/plexes/events.js"
 import { Simplex } from "./simplex.js"
 
 /**
@@ -30,7 +30,6 @@ export class FullDuplex<I, O> {
 }
 
 export type HalfDuplexEvents =
-  & OpenEvents
   & CloseEvents
   & ErrorEvents
 
@@ -45,9 +44,6 @@ export class HalfDuplex<I, O, M extends HalfDuplexEvents = HalfDuplexEvents> {
   readonly output: Simplex<O>
 
   readonly events = new SuperEventTarget<M>()
-
-  #starting = false
-  #started = false
 
   #closing?: { reason?: unknown }
   #closed?: { reason?: unknown }
@@ -65,16 +61,6 @@ export class HalfDuplex<I, O, M extends HalfDuplexEvents = HalfDuplexEvents> {
       readable: this.input.readable,
       writable: this.output.writable
     }
-
-    this.input.events.on("open", async () => {
-      await this.#onInputStart()
-      return new None()
-    })
-
-    this.output.events.on("open", async () => {
-      await this.#onOutputStart()
-      return new None()
-    })
 
     this.input.events.on("close", async () => {
       await this.#onInputClose()
@@ -97,32 +83,8 @@ export class HalfDuplex<I, O, M extends HalfDuplexEvents = HalfDuplexEvents> {
     })
   }
 
-  get started() {
-    return this.#started
-  }
-
   get closed() {
     return this.#closed
-  }
-
-  async #onInputStart() {
-    if (this.#started)
-      return
-    if (this.#starting)
-      return
-    this.#starting = true
-    await this.events.emit("open")
-    this.#started = true
-  }
-
-  async #onOutputStart() {
-    if (this.#started)
-      return
-    if (this.#starting)
-      return
-    this.#starting = true
-    await this.events.emit("open")
-    this.#started = true
   }
 
   async #onInputClose() {
@@ -187,6 +149,14 @@ export class HalfDuplex<I, O, M extends HalfDuplexEvents = HalfDuplexEvents> {
 
     await this.events.emit("close")
     this.#closed = { reason }
+  }
+
+  async error(reason?: unknown) {
+    await this.output.error(reason)
+  }
+
+  async close() {
+    await this.output.close()
   }
 
 }
