@@ -130,7 +130,14 @@ simplex.close()
 
 #### Full-Duplex
 
-This is just two simplexes (input & output) but combined in a way to be highly reusable
+A pair of simplexes that are closed independently
+
+- When one side is errored, the other is automatically errored
+- When one side is closed, the other is NOT automatically closed
+
+Events
+- error — called ONCE when input OR output are errored
+- close — called ONCE when input AND output are closed
 
 ```tsx
 class Crypter extends FullDuplex<Uint8Array, Uint8Array> {
@@ -163,13 +170,14 @@ function crypt(subprotocol: FullDuplex<Uint8Array, Uint8Array>) {
 
 #### Half-Duplex
 
-This is like a full-duplex, but when one simplex is closed or errored, the other is too
+A pair of simplexes that are closed together
 
-This is useful when you do not want to keep one side open
+- When one side is errored, the other is automatically errored
+- When one side is closed, the other is automatically closed
 
-You also have duplex events
-- close — called when input or output is closed
-- error — called when input or output is errored
+Events
+- error — called ONCE when input AND output are errored
+- close — called ONCE when input AND output are closed
 
 ```tsx
 class MySocket {
