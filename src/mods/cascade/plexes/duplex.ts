@@ -1,7 +1,6 @@
 import { None } from "@hazae41/option"
 import { SuperEventTarget } from "@hazae41/plume"
-import { CloseEvents, ErrorEvents } from "mods/cascade/plexes/events.js"
-import { Simplex } from "./simplex.js"
+import { CloseEvents, ErrorEvents, Simplex } from "./simplex.js"
 
 export type FullDuplexEvents =
   & CloseEvents
