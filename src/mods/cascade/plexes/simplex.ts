@@ -28,7 +28,7 @@ export type SimplexEvents<T> =
   & MessageEvents<T>
   & FlushEvents
 
-export class Simplex<T>  {
+export class Simplex<T> {
   readonly readable: ReadableStream<T>
   readonly writable: WritableStream<T>
 
@@ -69,7 +69,7 @@ export class Simplex<T>  {
   }
 
   async #onStart() {
-    await this.events.emit("open", [])
+    await this.events.emit("open")
     this.#started = true
   }
 
@@ -79,7 +79,7 @@ export class Simplex<T>  {
     if (this.#closing)
       return
     this.#closing = {}
-    await this.events.emit("close", [])
+    await this.events.emit("close")
     this.#closed = {}
   }
 
@@ -94,11 +94,11 @@ export class Simplex<T>  {
   }
 
   async #onTransform(data: T) {
-    await this.events.emit("message", [data])
+    await this.events.emit("message", data)
   }
 
   async #onFlush() {
-    await this.events.emit("flush", [])
+    await this.events.emit("flush")
   }
 
   async enqueue(chunk?: T) {

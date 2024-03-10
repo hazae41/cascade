@@ -37,14 +37,14 @@ export type HalfDuplexEvents =
 /**
  * A pair of simplexes that are connected to each other
  */
-export class HalfDuplex<I, O> {
+export class HalfDuplex<I, O, M extends HalfDuplexEvents = HalfDuplexEvents> {
   readonly inner: ReadableWritablePair<O, I>
   readonly outer: ReadableWritablePair<I, O>
 
   readonly input: Simplex<I>
   readonly output: Simplex<O>
 
-  readonly events = new SuperEventTarget<HalfDuplexEvents>()
+  readonly events = new SuperEventTarget<M>()
 
   #starting = false
   #started = false
@@ -111,7 +111,7 @@ export class HalfDuplex<I, O> {
     if (this.#starting)
       return
     this.#starting = true
-    await this.events.emit("open", [])
+    await this.events.emit("open")
     this.#started = true
   }
 
@@ -121,7 +121,7 @@ export class HalfDuplex<I, O> {
     if (this.#starting)
       return
     this.#starting = true
-    await this.events.emit("open", [])
+    await this.events.emit("open")
     this.#started = true
   }
 
@@ -137,7 +137,7 @@ export class HalfDuplex<I, O> {
      */
     this.output.close()
 
-    await this.events.emit("close", [])
+    await this.events.emit("close")
     this.#closed = {}
   }
 
@@ -153,7 +153,7 @@ export class HalfDuplex<I, O> {
      */
     this.input.close()
 
-    await this.events.emit("close", [])
+    await this.events.emit("close")
     this.#closed = {}
   }
 
@@ -169,7 +169,7 @@ export class HalfDuplex<I, O> {
      */
     this.output.error(reason)
 
-    await this.events.emit("close", [])
+    await this.events.emit("close")
     this.#closed = { reason }
   }
 
@@ -185,7 +185,7 @@ export class HalfDuplex<I, O> {
      */
     this.input.error(reason)
 
-    await this.events.emit("close", [])
+    await this.events.emit("close")
     this.#closed = { reason }
   }
 
