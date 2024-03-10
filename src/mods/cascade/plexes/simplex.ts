@@ -1,6 +1,25 @@
 import { SuperEventTarget } from "@hazae41/plume"
-import { CloseEvents, ErrorEvents, FlushEvents, MessageEvents, OpenEvents } from "libs/events/events.js"
 import { SuperTransformStream } from "../streams/transform.js"
+
+export type OpenEvents = {
+  open: () => void
+}
+
+export type CloseEvents = {
+  close: () => void
+}
+
+export type ErrorEvents = {
+  error: (reason?: unknown) => void
+}
+
+export type MessageEvents<T> = {
+  message: (data: T) => void
+}
+
+export type FlushEvents = {
+  flush: () => void
+}
 
 export type SimplexEvents<T> =
   & OpenEvents

@@ -1,6 +1,6 @@
 import { None } from "@hazae41/option"
 import { SuperEventTarget } from "@hazae41/plume"
-import { CloseEvents, ErrorEvents, OpenEvents } from "libs/events/events.js"
+import { CloseEvents, ErrorEvents, OpenEvents } from "mods/cascade/plexes/events.js"
 import { Simplex } from "./simplex.js"
 
 /**
