@@ -61,7 +61,7 @@ export class FullDuplex<I, O> {
   }
 
   async #onInputClose() {
-    if (!this.output.closed)
+    if (!this.output.closing)
       return
 
     if (this.#closed)
@@ -75,7 +75,7 @@ export class FullDuplex<I, O> {
   }
 
   async #onOutputClose() {
-    if (!this.input.closed)
+    if (!this.input.closing)
       return
 
     if (this.#closed)

@@ -32,9 +32,11 @@ export class Simplex<T> {
   readonly readable: ReadableStream<T>
   readonly writable: WritableStream<T>
 
-  readonly events = new SuperEventTarget<SimplexEvents<T>>()
   readonly stream: SuperTransformStream<T, T>
 
+  readonly events = new SuperEventTarget<SimplexEvents<T>>()
+
+  #starting = false
   #started = false
 
   #closing?: { reason?: unknown }
@@ -60,8 +62,16 @@ export class Simplex<T> {
       .catch(console.error)
   }
 
+  get starting() {
+    return this.#starting
+  }
+
   get started() {
     return this.#started
+  }
+
+  get closing() {
+    return this.#closing
   }
 
   get closed() {
@@ -69,6 +79,12 @@ export class Simplex<T> {
   }
 
   async #onStart() {
+    if (this.#started)
+      return
+    if (this.#starting)
+      return
+    this.#starting = false
+
     await this.events.emit("open")
     this.#started = true
   }
@@ -79,6 +95,7 @@ export class Simplex<T> {
     if (this.#closing)
       return
     this.#closing = {}
+
     await this.events.emit("close")
     this.#closed = {}
   }
@@ -89,6 +106,7 @@ export class Simplex<T> {
     if (this.#closing)
       return
     this.#closing = { reason }
+
     await this.events.emit("error", [reason])
     this.#closed = { reason }
   }
