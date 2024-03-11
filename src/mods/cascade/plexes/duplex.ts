@@ -1,9 +1,9 @@
 import { Awaitable } from "libs/promises/index.js"
-import { Simplex, SimplexListener } from "./simplex.js"
+import { Simplex, SimplexParams } from "./simplex.js"
 
-export interface FullDuplexListener<IW, IR = IW, OW = IR, OR = IW> {
-  readonly input?: SimplexListener<IW, OR>
-  readonly output?: SimplexListener<OW, IR>
+export interface FullDuplexParams<IW, IR = IW, OW = IR, OR = IW> {
+  readonly input?: SimplexParams<IW, OR>
+  readonly output?: SimplexParams<OW, IR>
 
   close?(this: FullDuplex<IW, IR, OW, OR>): Awaitable<void>
   error?(this: FullDuplex<IW, IR, OW, OR>, reason?: unknown): Awaitable<void>
@@ -23,16 +23,16 @@ export class FullDuplex<IW, IR = IW, OW = IR, OR = IW> {
   #closed?: { reason?: unknown }
 
   constructor(
-    readonly listener: FullDuplexListener<IW, IR, OW, OR> = {}
+    readonly params: FullDuplexParams<IW, IR, OW, OR> = {}
   ) {
     this.input = new Simplex<IW, OR>({
-      ...listener.input,
+      ...params.input,
       close: () => this.#onInputClose(),
       error: e => this.#onInputError(e)
     })
 
     this.output = new Simplex<OW, IR>({
-      ...listener.output,
+      ...params.output,
       close: () => this.#onOutputClose(),
       error: e => this.#onOutputError(e)
     })
@@ -61,7 +61,7 @@ export class FullDuplex<IW, IR = IW, OW = IR, OR = IW> {
   }
 
   async #onInputClose() {
-    await this.listener.input?.close?.call(this.input)
+    await this.params.input?.close?.call(this.input)
 
     if (!this.output.closing)
       return
@@ -72,13 +72,13 @@ export class FullDuplex<IW, IR = IW, OW = IR, OR = IW> {
       return
     this.#closing = {}
 
-    await this.listener.close?.call(this)
+    await this.params.close?.call(this)
 
     this.#closed = {}
   }
 
   async #onOutputClose() {
-    await this.listener.output?.close?.call(this.output)
+    await this.params.output?.close?.call(this.output)
 
     if (!this.input.closing)
       return
@@ -89,13 +89,13 @@ export class FullDuplex<IW, IR = IW, OW = IR, OR = IW> {
       return
     this.#closing = {}
 
-    await this.listener.close?.call(this)
+    await this.params.close?.call(this)
 
     this.#closed = {}
   }
 
   async #onInputError(reason?: unknown) {
-    await this.listener.input?.error?.call(this.input, reason)
+    await this.params.input?.error?.call(this.input, reason)
 
     if (this.#closed)
       return
@@ -105,13 +105,13 @@ export class FullDuplex<IW, IR = IW, OW = IR, OR = IW> {
 
     this.output.error(reason)
 
-    await this.listener.error?.call(this, reason)
+    await this.params.error?.call(this, reason)
 
     this.#closed = { reason }
   }
 
   async #onOutputError(reason?: unknown) {
-    await this.listener.output?.error?.call(this.output, reason)
+    await this.params.output?.error?.call(this.output, reason)
 
     if (this.#closed)
       return
@@ -121,7 +121,7 @@ export class FullDuplex<IW, IR = IW, OW = IR, OR = IW> {
 
     this.input.error(reason)
 
-    await this.listener.error?.call(this, reason)
+    await this.params.error?.call(this, reason)
 
     this.#closed = { reason }
   }
@@ -140,9 +140,9 @@ export class FullDuplex<IW, IR = IW, OW = IR, OR = IW> {
 
 }
 
-export interface HalfDuplexListener<IW, IR = IW, OW = IR, OR = IW> {
-  readonly input?: SimplexListener<IW, OR>
-  readonly output?: SimplexListener<OW, IR>
+export interface HalfDuplexParams<IW, IR = IW, OW = IR, OR = IW> {
+  readonly input?: SimplexParams<IW, OR>
+  readonly output?: SimplexParams<OW, IR>
 
   close?(this: HalfDuplex<IW, IR, OW, OR>): Awaitable<void>
   error?(this: HalfDuplex<IW, IR, OW, OR>, reason?: unknown): Awaitable<void>
@@ -162,16 +162,16 @@ export class HalfDuplex<IW, IR = IW, OW = IR, OR = IW> {
   #closed?: { reason?: unknown }
 
   constructor(
-    readonly listener: HalfDuplexListener<IW, IR, OW, OR> = {}
+    readonly params: HalfDuplexParams<IW, IR, OW, OR> = {}
   ) {
     this.input = new Simplex<IW, OR>({
-      ...listener.input,
+      ...params.input,
       close: () => this.#onInputClose(),
       error: e => this.#onInputError(e)
     })
 
     this.output = new Simplex<OW, IR>({
-      ...listener.output,
+      ...params.output,
       close: () => this.#onOutputClose(),
       error: e => this.#onOutputError(e)
     })
@@ -200,7 +200,7 @@ export class HalfDuplex<IW, IR = IW, OW = IR, OR = IW> {
   }
 
   async #onInputClose() {
-    await this.listener.input?.close?.call(this.input)
+    await this.params.input?.close?.call(this.input)
 
     if (this.#closed)
       return
@@ -210,13 +210,13 @@ export class HalfDuplex<IW, IR = IW, OW = IR, OR = IW> {
 
     this.output.close()
 
-    await this.listener.close?.call(this)
+    await this.params.close?.call(this)
 
     this.#closed = {}
   }
 
   async #onOutputClose() {
-    await this.listener.output?.close?.call(this.output)
+    await this.params.output?.close?.call(this.output)
 
     if (this.#closed)
       return
@@ -226,13 +226,13 @@ export class HalfDuplex<IW, IR = IW, OW = IR, OR = IW> {
 
     this.input.close()
 
-    await this.listener.close?.call(this)
+    await this.params.close?.call(this)
 
     this.#closed = {}
   }
 
   async #onInputError(reason?: unknown) {
-    await this.listener.input?.error?.call(this.input, reason)
+    await this.params.input?.error?.call(this.input, reason)
 
     if (this.#closed)
       return
@@ -242,13 +242,13 @@ export class HalfDuplex<IW, IR = IW, OW = IR, OR = IW> {
 
     this.output.error(reason)
 
-    await this.listener.error?.call(this, reason)
+    await this.params.error?.call(this, reason)
 
     this.#closed = { reason }
   }
 
   async #onOutputError(reason?: unknown) {
-    await this.listener.output?.error?.call(this.output, reason)
+    await this.params.output?.error?.call(this.output, reason)
 
     if (this.#closed)
       return
@@ -258,7 +258,7 @@ export class HalfDuplex<IW, IR = IW, OW = IR, OR = IW> {
 
     this.input.error(reason)
 
-    await this.listener.error?.call(this, reason)
+    await this.params.error?.call(this, reason)
 
     this.#closed = { reason }
   }

@@ -1,7 +1,7 @@
 import { Awaitable } from "libs/promises/index.js"
 import { SuperTransformStream } from "../streams/transform.js"
 
-export interface SimplexListener<W, R = W> {
+export interface SimplexParams<W, R = W> {
   open?(this: Simplex<W, R>): Awaitable<void>
   close?(this: Simplex<W, R>): Awaitable<void>
   error?(this: Simplex<W, R>, reason?: unknown): Awaitable<void>
@@ -22,7 +22,7 @@ export class Simplex<W, R = W> {
   #closed?: { reason?: unknown }
 
   constructor(
-    readonly listener: SimplexListener<W, R> = {}
+    readonly params: SimplexParams<W, R> = {}
   ) {
     const start = this.#onStart.bind(this)
     const transform = this.#onTransform.bind(this)
@@ -70,7 +70,7 @@ export class Simplex<W, R = W> {
       return
     this.#starting = true
 
-    await this.listener.open?.call(this)
+    await this.params.open?.call(this)
 
     this.#started = true
   }
@@ -82,7 +82,7 @@ export class Simplex<W, R = W> {
       return
     this.#closing = {}
 
-    await this.listener.close?.call(this)
+    await this.params.close?.call(this)
 
     this.#closed = {}
   }
@@ -94,17 +94,17 @@ export class Simplex<W, R = W> {
       return
     this.#closing = { reason }
 
-    await this.listener.error?.call(this, reason)
+    await this.params.error?.call(this, reason)
 
     this.#closed = { reason }
   }
 
   async #onTransform(data: W) {
-    await this.listener.message?.call(this, data)
+    await this.params.message?.call(this, data)
   }
 
   async #onFlush() {
-    await this.listener.flush?.call(this)
+    await this.params.flush?.call(this)
   }
 
   enqueue(chunk?: R) {
