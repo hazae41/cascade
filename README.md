@@ -88,13 +88,13 @@ const simplex = new Simplex<Uint8Array>({
    * When the simplex is open
    */
   async open() {
-    await this.enqueue(new Uint8Array([0, 1, 2]))
+    this.enqueue(new Uint8Array([0, 1, 2]))
   },
   /**
    * When the simplex is closing
    */
   async flush() {
-    await this.enqueue(new Uint8Array([7, 8, 9]))
+    this.enqueue(new Uint8Array([7, 8, 9]))
   },
   /**
    * When the simplex is closed
@@ -112,7 +112,7 @@ const simplex = new Simplex<Uint8Array>({
    * When the simplex receives a message
    */
   async message(message) {
-    await this.enqueue(message)
+    this.enqueue(message)
   },
 })
 
@@ -199,16 +199,20 @@ class MySocket extends EventTarget {
     close: () => this.#onClose(),
   })
 
-  async send(message: string) {
-    await this.#duplex.output.enqueue(message)
+  get inner() {
+    return this.#duplex.inner
   }
 
-  async error(reason?: unknown) {
-    await this.#duplex.output.error(reason)
+  send(message: string) {
+    this.#duplex.output.enqueue(message)
   }
 
-  async close() {
-    await this.#duplex.output.close()
+  error(reason?: unknown) {
+    this.#duplex.output.error(reason)
+  }
+
+  close() {
+    this.#duplex.output.close()
   }
 
   async #onMessage(data: string) {
