@@ -21,6 +21,14 @@ export class SuperTransformStream<I, O> {
     this.substream = new TransformStream(this.transformer, writableStrategy, readableStrategy)
   }
 
+  [Symbol.dispose]() {
+    this.terminate().catch(console.error)
+  }
+
+  async [Symbol.asyncDispose]() {
+    await this.terminate()
+  }
+
   get controller() {
     return this.transformer.controller
   }

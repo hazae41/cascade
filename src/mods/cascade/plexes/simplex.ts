@@ -62,6 +62,14 @@ export class Simplex<T> {
       .catch(console.error)
   }
 
+  [Symbol.dispose]() {
+    this.close().catch(console.error)
+  }
+
+  async [Symbol.asyncDispose]() {
+    await this.close()
+  }
+
   get starting() {
     return this.#starting
   }

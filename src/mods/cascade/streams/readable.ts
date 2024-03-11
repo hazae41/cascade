@@ -1,6 +1,6 @@
 import { Future } from "@hazae41/future"
 
-export class SuperReadableStream<R>  {
+export class SuperReadableStream<R> {
 
   readonly source: SuperUnderlyingDefaultSource<R>
 
@@ -17,6 +17,14 @@ export class SuperReadableStream<R>  {
   ) {
     this.source = new SuperUnderlyingDefaultSource(subsource)
     this.substream = new ReadableStream(this.source, strategy)
+  }
+
+  [Symbol.dispose]() {
+    this.close().catch(console.error)
+  }
+
+  async [Symbol.asyncDispose]() {
+    await this.close()
   }
 
   get controller() {

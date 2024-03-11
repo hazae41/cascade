@@ -19,6 +19,14 @@ export class SuperWritableStream<W> {
     this.substream = new WritableStream(this.sink, strategy)
   }
 
+  [Symbol.dispose]() {
+    this.error().catch(console.error)
+  }
+
+  async [Symbol.asyncDispose]() {
+    await this.error()
+  }
+
   get controller() {
     return this.sink.controller
   }

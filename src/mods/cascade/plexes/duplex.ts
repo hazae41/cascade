@@ -56,6 +56,14 @@ export class FullDuplex<I, O> {
     })
   }
 
+  [Symbol.dispose]() {
+    this.close().catch(console.error)
+  }
+
+  async [Symbol.asyncDispose]() {
+    await this.close()
+  }
+
   get closing() {
     return this.#closing
   }
@@ -122,6 +130,13 @@ export class FullDuplex<I, O> {
     await this.output.error(reason)
   }
 
+  async close() {
+    const ip = this.input.close()
+    const op = this.output.close()
+
+    await Promise.all([ip, op])
+  }
+
 }
 
 export type HalfDuplexEvents =
@@ -176,6 +191,14 @@ export class HalfDuplex<I, O> {
       await this.#onOutputError(reason)
       return new None()
     })
+  }
+
+  [Symbol.dispose]() {
+    this.close().catch(console.error)
+  }
+
+  async [Symbol.asyncDispose]() {
+    await this.close()
   }
 
   get closing() {
