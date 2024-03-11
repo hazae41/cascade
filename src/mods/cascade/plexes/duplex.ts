@@ -5,8 +5,8 @@ export interface FullDuplexListener<IW, IR = IW, OW = IR, OR = IW> {
   readonly input?: SimplexListener<IW, OR>
   readonly output?: SimplexListener<OW, IR>
 
-  readonly close?: (this: FullDuplex<IW, IR, OW, OR>) => Awaitable<void>
-  readonly error?: (this: FullDuplex<IW, IR, OW, OR>, reason?: unknown) => Awaitable<void>
+  close?(this: FullDuplex<IW, IR, OW, OR>): Awaitable<void>
+  error?(this: FullDuplex<IW, IR, OW, OR>, reason?: unknown): Awaitable<void>
 }
 
 /**
@@ -144,8 +144,8 @@ export interface HalfDuplexListener<IW, IR = IW, OW = IR, OR = IW> {
   readonly input?: SimplexListener<IW, OR>
   readonly output?: SimplexListener<OW, IR>
 
-  readonly close?: (this: HalfDuplex<IW, IR, OW, OR>) => Awaitable<void>
-  readonly error?: (this: HalfDuplex<IW, IR, OW, OR>, reason?: unknown) => Awaitable<void>
+  close?(this: HalfDuplex<IW, IR, OW, OR>): Awaitable<void>
+  error?(this: HalfDuplex<IW, IR, OW, OR>, reason?: unknown): Awaitable<void>
 }
 
 /**

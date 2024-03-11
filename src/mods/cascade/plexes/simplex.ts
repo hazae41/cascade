@@ -2,11 +2,11 @@ import { Awaitable } from "libs/promises/index.js"
 import { SuperTransformStream } from "../streams/transform.js"
 
 export interface SimplexListener<W, R = W> {
-  readonly open?: (this: Simplex<W, R>) => Awaitable<void>
-  readonly close?: (this: Simplex<W, R>) => Awaitable<void>
-  readonly error?: (this: Simplex<W, R>, reason?: unknown) => Awaitable<void>
-  readonly message?: (this: Simplex<W, R>, message: W) => Awaitable<void>
-  readonly flush?: (this: Simplex<W, R>) => Awaitable<void>
+  open?(this: Simplex<W, R>): Awaitable<void>
+  close?(this: Simplex<W, R>): Awaitable<void>
+  error?(this: Simplex<W, R>, reason?: unknown): Awaitable<void>
+  message?(this: Simplex<W, R>, message: W): Awaitable<void>
+  flush?(this: Simplex<W, R>): Awaitable<void>
 }
 
 export class Simplex<W, R = W> {
