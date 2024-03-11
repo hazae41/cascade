@@ -1,32 +1,13 @@
-import { SuperEventTarget } from "@hazae41/plume"
+import { Awaitable } from "libs/promises/index.js"
 import { SuperTransformStream } from "../streams/transform.js"
 
-export type OpenEvents = {
-  open: () => void
+export interface SimplexListener<W, R = W> {
+  readonly open?: (this: Simplex<W, R>) => Awaitable<void>
+  readonly close?: (this: Simplex<W, R>) => Awaitable<void>
+  readonly error?: (this: Simplex<W, R>, reason?: unknown) => Awaitable<void>
+  readonly message?: (this: Simplex<W, R>, message: W) => Awaitable<void>
+  readonly flush?: (this: Simplex<W, R>) => Awaitable<void>
 }
-
-export type CloseEvents = {
-  close: () => void
-}
-
-export type ErrorEvents = {
-  error: (reason?: unknown) => void
-}
-
-export type MessageEvents<I> = {
-  message: (data: I) => void
-}
-
-export type FlushEvents = {
-  flush: () => void
-}
-
-export type SimplexEvents<R> =
-  & OpenEvents
-  & CloseEvents
-  & ErrorEvents
-  & MessageEvents<R>
-  & FlushEvents
 
 export class Simplex<W, R = W> {
   readonly readable: ReadableStream<R>
@@ -34,15 +15,15 @@ export class Simplex<W, R = W> {
 
   readonly stream: SuperTransformStream<W, R>
 
-  readonly events = new SuperEventTarget<SimplexEvents<W>>()
-
   #starting = false
   #started = false
 
   #closing?: { reason?: unknown }
   #closed?: { reason?: unknown }
 
-  constructor() {
+  constructor(
+    readonly listener: SimplexListener<W, R> = {}
+  ) {
     const start = this.#onStart.bind(this)
     const transform = this.#onTransform.bind(this)
     const flush = this.#onFlush.bind(this)
@@ -91,9 +72,10 @@ export class Simplex<W, R = W> {
       return
     if (this.#starting)
       return
-    this.#starting = false
+    this.#starting = true
 
-    await this.events.emit("open")
+    await this.listener.open?.call(this)
+
     this.#started = true
   }
 
@@ -104,7 +86,8 @@ export class Simplex<W, R = W> {
       return
     this.#closing = {}
 
-    await this.events.emit("close")
+    await this.listener.close?.call(this)
+
     this.#closed = {}
   }
 
@@ -115,16 +98,17 @@ export class Simplex<W, R = W> {
       return
     this.#closing = { reason }
 
-    await this.events.emit("error", [reason])
+    await this.listener.error?.call(this, reason)
+
     this.#closed = { reason }
   }
 
   async #onTransform(data: W) {
-    await this.events.emit("message", data)
+    await this.listener.message?.call(this, data)
   }
 
   async #onFlush() {
-    await this.events.emit("flush")
+    await this.listener.flush?.call(this)
   }
 
   async enqueue(chunk?: R) {

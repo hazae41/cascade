@@ -70,7 +70,6 @@ const simplex = new Simplex<Uint8Array>()
 /**
  * You can use pipes
  */
-
 example.readable
   .pipeTo(simplex.writable)
   .then(() => console.log("Closed"))
@@ -84,44 +83,43 @@ simplex.readable
 /**
  * You can also use events
  */
-
-/**
- * When the pipe is closed
- */
-simplex.on("close", async () => {
-  console.log("Closed")
-  return new None()
-})
-
-/**
- * When the pipe is errored
- */
-simplex.on("error", async (reason) => {
-  console.error("Errored", e)
-  return new None()
-})
-
-/**
- * When you got some chunk
- */
-simplex.on("message", async (chunk) => {
-  console.log(chunk)
-
+const simplex = new Simplex<Uint8Array>({
   /**
-   * Pass it to the next stream in the pipe (optional)
+   * When the simplex is open
    */
-  simplex.enqueue(chunk)
-
-  return new None()
+  async open() {
+    await this.enqueue(new Uint8Array([0, 1, 2]))
+  },
+  /**
+   * When the simplex is closing
+   */
+  async flush() {
+    await this.enqueue(new Uint8Array([7, 8, 9]))
+  },
+  /**
+   * When the simplex is closed
+   */
+  async close() {
+    console.log("Closed")
+  },
+  /**
+   * When the simplex is errored
+   */
+  async error(error) {
+    console.log("Errored", error)
+  },
+  /**
+   * When the simplex receives a message
+   */
+  async message(message) {
+    await this.enqueue(message)
+  },
 })
 
 /**
- * When the simplex is about to close
+ * You can enqueue it at any time
  */
-simplex.on("flush", async (chunk) => {
-  simplex.enqueue(new TextEncoder().encode("Bye"))
-  return new None()
-})
+simplex.enqueue(new Uint8Array([4, 5, 6]))
 
 /**
  * You can close it at any time
@@ -144,18 +142,30 @@ Events
 class Crypter extends FullDuplex<Uint8Array, Uint8Array> {
 
   constructor() {
-    super()
-
-    this.output.on("message", async chunk => {
-      this.output.enqueue(await encrypt(chunk))
-      return new None()
-    })
-
-    this.input.on("message", async chunk => {
-      this.input.enqueue(await decrypt(chunk))
-      return new None()
+    super({
+      input: { message: m => this.#onInputMessage(m) },
+      output: { message: m => this.#onOutputMessage(m) },
+      close: () => this.#onClose(),
+      error: e => this.#onError(e)
     })
   }
+
+  async #onInputMessage(data: Uint8Array) {
+    this.input.enqueue(await encrypt(data))
+  }
+
+  async #onOutputMessage(data: Uint8Array) {
+    this.output.enqueue(await decrypt(data))
+  }
+
+  async #onError(reason?: unknown) {
+    console.error("Errored", reason)
+  }
+
+  async #onClose() {
+    console.log("Closed")
+  }
+
 }
 
 function crypt(subprotocol: FullDuplex<Uint8Array, Uint8Array>) {
@@ -177,41 +187,40 @@ A pair of simplexes that are closed together
 - When one side is closed, the other is automatically closed
 
 Events
-- error — called ONCE when input AND output are errored
-- close — called ONCE when input AND output are closed
+- error — called ONCE when input OR output are errored
+- close — called ONCE when input OR output are closed
 
 ```tsx
-class MySocket {
+class MySocket extends EventTarget {
 
-  readonly #duplex = new HalfDuplex<string, string>()
+  readonly #duplex = new HalfDuplex<string, string>({
+    input: { message: m => this.#onMessage(m) },
+    error: e => this.#onError(e),
+    close: () => this.#onClose(),
+  })
 
   async send(message: string) {
     await this.#duplex.output.enqueue(message)
+  }
+
+  async error(reason?: unknown) {
+    await this.#duplex.output.error(reason)
   }
 
   async close() {
     await this.#duplex.output.close()
   }
 
-  async onMessage(listener: (message: string) => void) {
-    this.#duplex.input.events.on("message", async message => {
-      listener(message)
-      return new None()
-    })
+  async #onMessage(data: string) {
+    this.dispatchEvent(new MessageEvent("message", { data }))
   }
 
-  async onClose(listener: () => void) {
-    this.#duplex.events.on("close", async () => {
-      listener()
-      return new None()
-    })
+  async #onError(reason?: unknown) {
+    this.dispatchEvent(new ErrorEvent("error", { error: reason }))
   }
 
-  async onError(listener: (reason?: unknown) => void) {
-    this.#duplex.events.on("error", async (reason) => {
-      listener(reason)
-      return new None()
-    })
+  async #onClose() {
+    this.dispatchEvent(new Event("close"))
   }
 
 }
