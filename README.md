@@ -19,6 +19,7 @@ It took me 1 year to manage JavaScript streams in such a way as to avoid headach
 - No external dependencies
 - No need for controller access
 - Simplex, Half-Duplex, Full-Duplex
+- Use Symbol.dispose to close streams
 
 ## Usage
 
