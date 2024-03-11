@@ -1,8 +1,8 @@
 import { None } from "@hazae41/option"
 import { HalfDuplex } from "./index.js"
 
-const a = new HalfDuplex()
-const b = new HalfDuplex()
+const a = new HalfDuplex<string>()
+const b = new HalfDuplex<string>()
 
 a.input.events.on("message", (data) => {
   console.log(data)

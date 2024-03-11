@@ -9,12 +9,12 @@ export type FullDuplexEvents =
 /**
  * A pair of simplexes that are closed independently
  */
-export class FullDuplex<I, O> {
-  readonly inner: ReadableWritablePair<O, I>
-  readonly outer: ReadableWritablePair<I, O>
+export class FullDuplex<IW, IR = IW, OW = IR, OR = IW> {
+  readonly inner: ReadableWritablePair<IR, IW>
+  readonly outer: ReadableWritablePair<OR, OW>
 
-  readonly input: Simplex<I>
-  readonly output: Simplex<O>
+  readonly input: Simplex<IW, OR>
+  readonly output: Simplex<OW, IR>
 
   readonly events = new SuperEventTarget<FullDuplexEvents>()
 
@@ -22,8 +22,8 @@ export class FullDuplex<I, O> {
   #closed?: { reason?: unknown }
 
   constructor() {
-    this.input = new Simplex<I>()
-    this.output = new Simplex<O>()
+    this.input = new Simplex<IW, OR>()
+    this.output = new Simplex<OW, IR>()
 
     this.inner = {
       readable: this.output.readable,
@@ -146,12 +146,12 @@ export type HalfDuplexEvents =
 /**
  * A pair of simplexes that are closed together
  */
-export class HalfDuplex<I, O> {
-  readonly inner: ReadableWritablePair<O, I>
-  readonly outer: ReadableWritablePair<I, O>
+export class HalfDuplex<IW, IR = IW, OW = IR, OR = IW> {
+  readonly inner: ReadableWritablePair<IR, IW>
+  readonly outer: ReadableWritablePair<OR, OW>
 
-  readonly input: Simplex<I>
-  readonly output: Simplex<O>
+  readonly input: Simplex<IW, OR>
+  readonly output: Simplex<OW, IR>
 
   readonly events = new SuperEventTarget<HalfDuplexEvents>()
 
@@ -159,8 +159,8 @@ export class HalfDuplex<I, O> {
   #closed?: { reason?: unknown }
 
   constructor() {
-    this.input = new Simplex<I>()
-    this.output = new Simplex<O>()
+    this.input = new Simplex<IW, OR>()
+    this.output = new Simplex<OW, IR>()
 
     this.inner = {
       readable: this.output.readable,

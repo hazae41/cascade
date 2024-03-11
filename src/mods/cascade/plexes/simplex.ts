@@ -13,28 +13,28 @@ export type ErrorEvents = {
   error: (reason?: unknown) => void
 }
 
-export type MessageEvents<T> = {
-  message: (data: T) => void
+export type MessageEvents<I> = {
+  message: (data: I) => void
 }
 
 export type FlushEvents = {
   flush: () => void
 }
 
-export type SimplexEvents<T> =
+export type SimplexEvents<R> =
   & OpenEvents
   & CloseEvents
   & ErrorEvents
-  & MessageEvents<T>
+  & MessageEvents<R>
   & FlushEvents
 
-export class Simplex<T> {
-  readonly readable: ReadableStream<T>
-  readonly writable: WritableStream<T>
+export class Simplex<W, R = W> {
+  readonly readable: ReadableStream<R>
+  readonly writable: WritableStream<W>
 
-  readonly stream: SuperTransformStream<T, T>
+  readonly stream: SuperTransformStream<W, R>
 
-  readonly events = new SuperEventTarget<SimplexEvents<T>>()
+  readonly events = new SuperEventTarget<SimplexEvents<W>>()
 
   #starting = false
   #started = false
@@ -47,10 +47,10 @@ export class Simplex<T> {
     const transform = this.#onTransform.bind(this)
     const flush = this.#onFlush.bind(this)
 
-    this.stream = new SuperTransformStream<T, T>({ start, transform, flush })
+    this.stream = new SuperTransformStream<W, R>({ start, transform, flush })
 
     const before = this.stream.substream
-    const after = new TransformStream<T, T>({})
+    const after = new TransformStream<R, R>({})
 
     this.readable = after.readable
     this.writable = before.writable
@@ -119,7 +119,7 @@ export class Simplex<T> {
     this.#closed = { reason }
   }
 
-  async #onTransform(data: T) {
+  async #onTransform(data: W) {
     await this.events.emit("message", data)
   }
 
@@ -127,7 +127,7 @@ export class Simplex<T> {
     await this.events.emit("flush")
   }
 
-  async enqueue(chunk?: T) {
+  async enqueue(chunk?: R) {
     return await this.stream.enqueue(chunk)
   }
 
