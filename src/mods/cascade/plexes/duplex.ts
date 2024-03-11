@@ -56,6 +56,10 @@ export class FullDuplex<I, O> {
     })
   }
 
+  get closing() {
+    return this.#closing
+  }
+
   get closed() {
     return this.#closed
   }
@@ -172,6 +176,10 @@ export class HalfDuplex<I, O> {
       await this.#onOutputError(reason)
       return new None()
     })
+  }
+
+  get closing() {
+    return this.#closing
   }
 
   get closed() {
