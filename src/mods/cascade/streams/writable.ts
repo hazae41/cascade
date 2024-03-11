@@ -1,5 +1,3 @@
-import { Future } from "@hazae41/future"
-
 export class SuperWritableStream<W> {
 
   readonly sink: SuperUnderlyingSink<W>
@@ -20,11 +18,7 @@ export class SuperWritableStream<W> {
   }
 
   [Symbol.dispose]() {
-    this.error().catch(console.error)
-  }
-
-  async [Symbol.asyncDispose]() {
-    await this.error()
+    this.error()
   }
 
   get controller() {
@@ -32,50 +26,42 @@ export class SuperWritableStream<W> {
   }
 
   get signal() {
-    return this.#signal()
+    return this.controller.signal
   }
 
-  async #signal() {
-    const controller = await this.controller
-
-    return controller.signal
-  }
-
-  async error(reason?: unknown) {
-    const controller = await this.controller
-
-    controller.error(reason)
+  error(reason?: unknown) {
+    this.controller.error(reason)
   }
 
 }
 
 export class SuperUnderlyingSink<W> implements UnderlyingSink<W> {
 
-  #controller = new Future<WritableStreamDefaultController>()
+  #controller?: WritableStreamDefaultController
 
   constructor(
     readonly inner: UnderlyingSink<W>
   ) { }
 
   get controller() {
-    return this.#controller.promise
+    return this.#controller!
   }
 
-  async start(controller: WritableStreamDefaultController) {
-    this.#controller.resolve(controller)
+  start(controller: WritableStreamDefaultController) {
+    this.#controller = controller
 
     return this.inner.start?.(controller)
   }
 
-  async write(chunk: W) {
-    return this.inner.write?.(chunk, await this.controller)
+  write(chunk: W, controller: WritableStreamDefaultController) {
+    return this.inner.write?.(chunk, controller)
   }
 
-  async abort(reason?: unknown) {
+  abort(reason?: unknown) {
     return this.inner.abort?.(reason)
   }
 
-  async close() {
+  close() {
     return this.inner.close?.()
   }
 

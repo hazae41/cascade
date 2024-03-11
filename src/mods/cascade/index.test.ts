@@ -1,12 +1,12 @@
-import { HalfDuplex } from "./index.js"
+import { FullDuplex } from "./index.js"
 
 class A {
   readonly #class = A
 
-  readonly duplex: HalfDuplex<string>
+  readonly duplex: FullDuplex<string>
 
   constructor() {
-    this.duplex = new HalfDuplex<string>({
+    this.duplex = new FullDuplex<string>({
       input: {
         open: () => this.#onInputOpen(),
         message: m => this.#onInputMessage(m),
@@ -30,7 +30,10 @@ class A {
   async #onInputMessage(data: string) {
     console.log(this.#class.name, "<-", data)
     await new Promise(ok => setTimeout(ok, 1000))
-    await this.duplex.output.close()
+
+    if (this.duplex.output.closing)
+      return
+    this.duplex.output.enqueue(data)
   }
 
   async #onInputClose() {
@@ -58,8 +61,12 @@ class A {
     console.error(this.#class.name, "->", "error", reason)
   }
 
-  async send(data: string) {
-    await this.duplex.output.enqueue(data)
+  send(data: string) {
+    this.duplex.output.enqueue(data)
+  }
+
+  close() {
+    this.duplex.output.close()
   }
 
 }
@@ -67,10 +74,10 @@ class A {
 class B {
   readonly #class = B
 
-  readonly duplex: HalfDuplex<string>
+  readonly duplex: FullDuplex<string>
 
   constructor() {
-    this.duplex = new HalfDuplex<string>({
+    this.duplex = new FullDuplex<string>({
       input: {
         open: () => this.#onInputOpen(),
         message: m => this.#onInputMessage(m),
@@ -93,11 +100,16 @@ class B {
 
   async #onInputMessage(data: string) {
     console.log(this.#class.name, "<-", data)
-    await this.duplex.output.enqueue(data)
+    await new Promise(ok => setTimeout(ok, 1000))
+
+    if (this.duplex.output.closing)
+      return
+    this.duplex.output.enqueue(data)
   }
 
   async #onInputClose() {
     console.log(this.#class.name, "<-", "close")
+    this.duplex.output.close()
   }
 
   async #onInputError(reason?: unknown) {
@@ -120,8 +132,12 @@ class B {
     console.error(this.#class.name, "->", "error", reason)
   }
 
-  async send(data: string) {
-    await this.duplex.output.enqueue(data)
+  send(data: string) {
+    this.duplex.output.enqueue(data)
+  }
+
+  close() {
+    this.duplex.output.close()
   }
 
 }
@@ -134,38 +150,6 @@ b.duplex.inner.readable.pipeTo(a.duplex.inner.writable).then(() => console.log("
 
 a.send("hello")
 
-while (true) { }
+await new Promise(ok => setTimeout(ok, 10000))
 
-class MySocket extends EventTarget {
-
-  readonly #duplex = new HalfDuplex<string, string>({
-    input: { message: m => this.#onMessage(m) },
-    error: e => this.#onError(e),
-    close: () => this.#onClose(),
-  })
-
-  async send(message: string) {
-    await this.#duplex.output.enqueue(message)
-  }
-
-  async error(reason?: unknown) {
-    await this.#duplex.output.error(reason)
-  }
-
-  async close() {
-    await this.#duplex.output.close()
-  }
-
-  async #onMessage(data: string) {
-    this.dispatchEvent(new MessageEvent("message", { data }))
-  }
-
-  async #onError(reason?: unknown) {
-    this.dispatchEvent(new ErrorEvent("error", { error: reason }))
-  }
-
-  async #onClose() {
-    this.dispatchEvent(new Event("close"))
-  }
-
-}
+a.close()

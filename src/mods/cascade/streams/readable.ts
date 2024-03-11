@@ -1,4 +1,3 @@
-import { Future } from "@hazae41/future"
 
 export class SuperReadableStream<R> {
 
@@ -20,59 +19,50 @@ export class SuperReadableStream<R> {
   }
 
   [Symbol.dispose]() {
-    this.close().catch(console.error)
-  }
-
-  async [Symbol.asyncDispose]() {
-    await this.close()
+    this.close()
   }
 
   get controller() {
     return this.source.controller
   }
 
-  async enqueue(chunk?: R) {
-    const controller = await this.controller
-
-    controller.enqueue(chunk)
+  enqueue(chunk?: R) {
+    this.controller.enqueue(chunk)
   }
 
-  async error(reason?: unknown) {
-    const controller = await this.controller
-
-    controller.error(reason)
+  error(reason?: unknown) {
+    this.controller.error(reason)
   }
 
-  async close() {
-    const controller = await this.controller
-
-    controller.close()
+  close() {
+    this.controller.close()
   }
 
 }
 
 export class SuperUnderlyingDefaultSource<R> implements UnderlyingDefaultSource<R> {
 
-  #controller = new Future<ReadableStreamDefaultController<R>>()
+  #controller?: ReadableStreamDefaultController<R>
 
   constructor(
     readonly inner: UnderlyingDefaultSource<R>
   ) { }
 
   get controller() {
-    return this.#controller.promise
+    return this.#controller!
   }
 
-  async start(controller: ReadableStreamDefaultController<R>) {
-    this.#controller.resolve(controller)
+  start(controller: ReadableStreamDefaultController<R>) {
+    this.#controller = controller
+
     return this.inner.start?.(controller)
   }
 
-  async pull() {
-    return this.inner.pull?.(await this.controller)
+  pull(controller: ReadableStreamDefaultController<R>) {
+    return this.inner.pull?.(controller)
   }
 
-  async cancel(reason?: unknown) {
+  cancel(reason?: unknown) {
     return this.inner.cancel?.(reason)
   }
 

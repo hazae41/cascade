@@ -49,11 +49,7 @@ export class FullDuplex<IW, IR = IW, OW = IR, OR = IW> {
   }
 
   [Symbol.dispose]() {
-    this.close().catch(console.error)
-  }
-
-  async [Symbol.asyncDispose]() {
-    await this.close()
+    this.close()
   }
 
   get closing() {
@@ -130,15 +126,16 @@ export class FullDuplex<IW, IR = IW, OW = IR, OR = IW> {
     this.#closed = { reason }
   }
 
-  async error(reason?: unknown) {
-    await this.output.error(reason)
+  error(reason?: unknown) {
+    this.output.error(reason)
   }
 
-  async close() {
-    const ip = this.input.close()
-    const op = this.output.close()
-
-    await Promise.all([ip, op])
+  close() {
+    try {
+      this.input.close()
+    } finally {
+      this.output.close()
+    }
   }
 
 }
@@ -191,11 +188,7 @@ export class HalfDuplex<IW, IR = IW, OW = IR, OR = IW> {
   }
 
   [Symbol.dispose]() {
-    this.close().catch(console.error)
-  }
-
-  async [Symbol.asyncDispose]() {
-    await this.close()
+    this.close()
   }
 
   get closing() {
@@ -270,12 +263,12 @@ export class HalfDuplex<IW, IR = IW, OW = IR, OR = IW> {
     this.#closed = { reason }
   }
 
-  async error(reason?: unknown) {
-    await this.output.error(reason)
+  error(reason?: unknown) {
+    this.output.error(reason)
   }
 
-  async close() {
-    await this.output.close()
+  close() {
+    this.output.close()
   }
 
 }

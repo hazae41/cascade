@@ -1,4 +1,3 @@
-import { Future } from "@hazae41/future"
 
 export class SuperTransformStream<I, O> {
 
@@ -22,60 +21,51 @@ export class SuperTransformStream<I, O> {
   }
 
   [Symbol.dispose]() {
-    this.terminate().catch(console.error)
-  }
-
-  async [Symbol.asyncDispose]() {
-    await this.terminate()
+    this.terminate()
   }
 
   get controller() {
     return this.transformer.controller
   }
 
-  async enqueue(chunk?: O) {
-    const controller = await this.controller
-
-    controller.enqueue(chunk)
+  enqueue(chunk?: O) {
+    this.controller.enqueue(chunk)
   }
 
-  async error(reason?: unknown) {
-    const controller = await this.controller
-
-    controller.error(reason)
+  error(reason?: unknown) {
+    this.controller.error(reason)
   }
 
-  async terminate() {
-    const controller = await this.controller
-
-    controller.terminate()
+  terminate() {
+    this.controller.terminate()
   }
 
 }
 
 export class SuperTransformer<I, O> implements Transformer<I, O> {
 
-  #controller = new Future<TransformStreamDefaultController<O>>()
+  #controller?: TransformStreamDefaultController<O>
 
   constructor(
     readonly inner: Transformer<I, O>
   ) { }
 
   get controller() {
-    return this.#controller.promise
+    return this.#controller!
   }
 
-  async start(controller: TransformStreamDefaultController<O>) {
-    this.#controller.resolve(controller)
+  start(controller: TransformStreamDefaultController<O>) {
+    this.#controller = controller
+
     return this.inner.start?.(controller)
   }
 
-  async transform(chunk: I) {
-    return this.inner.transform?.(chunk, await this.controller)
+  transform(chunk: I, controller: TransformStreamDefaultController<O>) {
+    return this.inner.transform?.(chunk, controller)
   }
 
-  async flush() {
-    return this.inner.flush?.(await this.controller)
+  flush(controller: TransformStreamDefaultController<O>) {
+    return this.inner.flush?.(controller)
   }
 
 }

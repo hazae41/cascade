@@ -44,11 +44,7 @@ export class Simplex<W, R = W> {
   }
 
   [Symbol.dispose]() {
-    this.close().catch(console.error)
-  }
-
-  async [Symbol.asyncDispose]() {
-    await this.close()
+    this.close()
   }
 
   get starting() {
@@ -111,16 +107,16 @@ export class Simplex<W, R = W> {
     await this.listener.flush?.call(this)
   }
 
-  async enqueue(chunk?: R) {
-    return await this.stream.enqueue(chunk)
+  enqueue(chunk?: R) {
+    return this.stream.enqueue(chunk)
   }
 
-  async error(reason?: unknown) {
-    return await this.stream.error(reason)
+  error(reason?: unknown) {
+    return this.stream.error(reason)
   }
 
-  async close() {
-    return await this.stream.terminate()
+  close() {
+    return this.stream.terminate()
   }
 
 }
