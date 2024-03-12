@@ -1,19 +1,18 @@
 import { Awaitable } from "libs/promises/index.js"
-import { SuperTransformStream } from "../streams/transform.js"
+import { SuperReadableStream } from "../streams/readable.js"
+import { SuperWritableStream } from "../streams/writable.js"
 
 export interface SimplexParams<W, R = W> {
-  open?(this: Simplex<W, R>): Awaitable<void>
+  start?(this: Simplex<W, R>): Awaitable<void>
   close?(this: Simplex<W, R>): Awaitable<void>
   error?(this: Simplex<W, R>, reason?: unknown): Awaitable<void>
-  message?(this: Simplex<W, R>, message: W): Awaitable<void>
-  flush?(this: Simplex<W, R>): Awaitable<void>
+  write?(this: Simplex<W, R>, chunk: W): Awaitable<void>
 }
 
 export class Simplex<W, R = W> {
-  readonly readable: ReadableStream<R>
-  readonly writable: WritableStream<W>
 
-  readonly stream: SuperTransformStream<W, R>
+  readonly #reader: SuperReadableStream<R>
+  readonly #writer: SuperWritableStream<W>
 
   #starting = false
   #started = false
@@ -24,27 +23,28 @@ export class Simplex<W, R = W> {
   constructor(
     readonly params: SimplexParams<W, R> = {}
   ) {
-    const start = this.#onStart.bind(this)
-    const transform = this.#onTransform.bind(this)
-    const flush = this.#onFlush.bind(this)
+    this.#writer = new SuperWritableStream<W>({
+      start: () => this.#onStart(),
+      write: c => this.#onWrite(c),
+      close: () => this.#onClose(),
+      abort: e => this.#onError(e)
+    })
 
-    this.stream = new SuperTransformStream<W, R>({ start, transform, flush })
-
-    const before = this.stream.substream
-    const after = new TransformStream<R, R>({})
-
-    this.readable = after.readable
-    this.writable = before.writable
-
-    before.readable
-      .pipeTo(after.writable)
-      .then(this.#onClose.bind(this))
-      .catch(this.#onError.bind(this))
-      .catch(console.error)
+    this.#reader = new SuperReadableStream<R>({
+      cancel: e => this.#onError(e)
+    })
   }
 
   [Symbol.dispose]() {
     this.close()
+  }
+
+  get readable() {
+    return this.#reader.substream
+  }
+
+  get writable() {
+    return this.#writer.substream
   }
 
   get starting() {
@@ -64,36 +64,50 @@ export class Simplex<W, R = W> {
   }
 
   async #onStart() {
-    if (this.#started)
-      return
     if (this.#starting)
       return
     this.#starting = true
 
     try {
-      await this.params.open?.call(this)
+      await this.params.start?.call(this)
     } finally {
       this.#started = true
     }
   }
 
   async #onClose() {
-    if (this.#closed)
-      return
     if (this.#closing)
       return
     this.#closing = {}
 
     try {
       await this.params.close?.call(this)
-    } finally {
+
+      try {
+        this.#reader.close()
+      } catch { }
+
+      try {
+        this.#writer.error()
+      } catch { }
+
       this.#closed = {}
+    } catch (reason: unknown) {
+      this.#closing = { reason }
+
+      try {
+        this.#reader.error(reason)
+      } catch { }
+
+      try {
+        this.#writer.error(reason)
+      } catch { }
+
+      this.#closed = { reason }
     }
   }
 
   async #onError(reason?: unknown) {
-    if (this.#closed)
-      return
     if (this.#closing)
       return
     this.#closing = { reason }
@@ -101,28 +115,32 @@ export class Simplex<W, R = W> {
     try {
       await this.params.error?.call(this, reason)
     } finally {
+      try {
+        this.#writer.error(reason)
+      } catch { }
+
+      try {
+        this.#reader.error(reason)
+      } catch { }
+
       this.#closed = { reason }
     }
   }
 
-  async #onTransform(data: W) {
-    await this.params.message?.call(this, data)
-  }
-
-  async #onFlush() {
-    await this.params.flush?.call(this)
+  async #onWrite(data: W) {
+    await this.params.write?.call(this, data)
   }
 
   enqueue(chunk?: R) {
-    return this.stream.enqueue(chunk)
+    this.#reader.enqueue(chunk)
   }
 
   error(reason?: unknown) {
-    return this.stream.error(reason)
+    this.#onError(reason).catch(console.error)
   }
 
   close() {
-    return this.stream.terminate()
+    this.#onClose().catch(console.error)
   }
 
 }

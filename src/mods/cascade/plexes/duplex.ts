@@ -67,8 +67,6 @@ export class FullDuplex<IW, IR = IW, OW = IR, OR = IW> {
       if (!this.output.closing)
         return
 
-      if (this.#closed)
-        return
       if (this.#closing)
         return
       this.#closing = {}
@@ -88,8 +86,6 @@ export class FullDuplex<IW, IR = IW, OW = IR, OR = IW> {
       if (!this.input.closing)
         return
 
-      if (this.#closed)
-        return
       if (this.#closing)
         return
       this.#closing = {}
@@ -106,8 +102,6 @@ export class FullDuplex<IW, IR = IW, OW = IR, OR = IW> {
     try {
       await this.params.input?.error?.call(this.input, reason)
     } finally {
-      if (this.#closed)
-        return
       if (this.#closing)
         return
       this.#closing = { reason }
@@ -126,8 +120,6 @@ export class FullDuplex<IW, IR = IW, OW = IR, OR = IW> {
     try {
       await this.params.output?.error?.call(this.output, reason)
     } finally {
-      if (this.#closed)
-        return
       if (this.#closing)
         return
       this.#closing = { reason }
@@ -219,9 +211,6 @@ export class HalfDuplex<IW, IR = IW, OW = IR, OR = IW> {
     try {
       await this.params.input?.close?.call(this.input)
     } finally {
-
-      if (this.#closed)
-        return
       if (this.#closing)
         return
       this.#closing = {}
@@ -240,8 +229,6 @@ export class HalfDuplex<IW, IR = IW, OW = IR, OR = IW> {
     try {
       await this.params.output?.close?.call(this.output)
     } finally {
-      if (this.#closed)
-        return
       if (this.#closing)
         return
       this.#closing = {}
@@ -260,8 +247,6 @@ export class HalfDuplex<IW, IR = IW, OW = IR, OR = IW> {
     try {
       await this.params.input?.error?.call(this.input, reason)
     } finally {
-      if (this.#closed)
-        return
       if (this.#closing)
         return
       this.#closing = { reason }
@@ -280,8 +265,6 @@ export class HalfDuplex<IW, IR = IW, OW = IR, OR = IW> {
     try {
       await this.params.output?.error?.call(this.output, reason)
     } finally {
-      if (this.#closed)
-        return
       if (this.#closing)
         return
       this.#closing = { reason }

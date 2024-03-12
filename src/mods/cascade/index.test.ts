@@ -8,14 +8,14 @@ class A {
   constructor() {
     this.duplex = new FullDuplex<string>({
       input: {
-        open: () => this.#onInputOpen(),
-        message: m => this.#onInputMessage(m),
+        start: () => this.#onInputOpen(),
+        write: m => this.#onInputMessage(m),
         close: () => this.#onInputClose(),
         error: e => this.#onInputError(e)
       },
       output: {
-        open: () => this.#onOutputOpen(),
-        message: m => this.#onOutputMessage(m),
+        start: () => this.#onOutputOpen(),
+        write: m => this.#onOutputMessage(m),
         close: () => this.#onOutputClose(),
         error: e => this.#onOutputError(e)
       }
@@ -79,14 +79,14 @@ class B {
   constructor() {
     this.duplex = new FullDuplex<string>({
       input: {
-        open: () => this.#onInputOpen(),
-        message: m => this.#onInputMessage(m),
+        start: () => this.#onInputOpen(),
+        write: m => this.#onInputMessage(m),
         close: () => this.#onInputClose(),
         error: e => this.#onInputError(e)
       },
       output: {
-        open: () => this.#onOutputOpen(),
-        message: m => this.#onOutputMessage(m),
+        start: () => this.#onOutputOpen(),
+        write: m => this.#onOutputMessage(m),
         close: () => this.#onOutputClose(),
         error: e => this.#onOutputError(e)
       }
