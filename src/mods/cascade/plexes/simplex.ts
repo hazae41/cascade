@@ -70,9 +70,11 @@ export class Simplex<W, R = W> {
       return
     this.#starting = true
 
-    await this.params.open?.call(this)
-
-    this.#started = true
+    try {
+      await this.params.open?.call(this)
+    } finally {
+      this.#started = true
+    }
   }
 
   async #onClose() {
@@ -82,9 +84,11 @@ export class Simplex<W, R = W> {
       return
     this.#closing = {}
 
-    await this.params.close?.call(this)
-
-    this.#closed = {}
+    try {
+      await this.params.close?.call(this)
+    } finally {
+      this.#closed = {}
+    }
   }
 
   async #onError(reason?: unknown) {
@@ -94,9 +98,11 @@ export class Simplex<W, R = W> {
       return
     this.#closing = { reason }
 
-    await this.params.error?.call(this, reason)
-
-    this.#closed = { reason }
+    try {
+      await this.params.error?.call(this, reason)
+    } finally {
+      this.#closed = { reason }
+    }
   }
 
   async #onTransform(data: W) {
