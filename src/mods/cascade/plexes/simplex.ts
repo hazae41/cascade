@@ -155,26 +155,10 @@ export class Simplex<W, R = W> {
   }
 
   error(reason?: unknown) {
-    try {
-      this.#writer.error(reason)
-    } catch { }
-
-    try {
-      this.#reader.error(reason)
-    } catch { }
-
     this.#onError(reason).catch(console.error)
   }
 
   close() {
-    try {
-      this.#reader.close()
-    } catch { }
-
-    try {
-      this.#writer.error()
-    } catch { }
-
     this.#onClose().catch(console.error)
   }
 
