@@ -3,9 +3,30 @@ import { SuperReadableStream } from "../streams/readable.js"
 import { SuperWritableStream } from "../streams/writable.js"
 
 export interface SimplexParams<W, R = W> {
+  /**
+   * Called when the stream is started
+   * @param this 
+   */
   start?(this: Simplex<W, R>): Awaitable<void>
+
+  /**
+   * Called when the stream is closed
+   * @param this 
+   */
   close?(this: Simplex<W, R>): Awaitable<void>
+
+  /**
+   * Called when the stream is errored
+   * @param this 
+   * @param reason 
+   */
   error?(this: Simplex<W, R>, reason?: unknown): Awaitable<void>
+
+  /**
+   * Called when a chunk is written to the stream
+   * @param this 
+   * @param chunk 
+   */
   write?(this: Simplex<W, R>, chunk: W): Awaitable<void>
 }
 
