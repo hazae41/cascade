@@ -74,7 +74,7 @@ export class Simplex<W, R = W> {
     return this.#errored
   }
 
-  get erroredOrClosed() {
+  get stopped() {
     return this.#errored || this.#closed
   }
 

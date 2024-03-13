@@ -71,7 +71,7 @@ export class FullDuplex<IW, IR = IW, OW = IR, OR = IW> {
     return this.#errored
   }
 
-  get erroredOrClosed() {
+  get stopped() {
     return this.#errored || this.#closed
   }
 
@@ -226,7 +226,7 @@ export class HalfDuplex<IW, IR = IW, OW = IR, OR = IW> {
     return this.#errored
   }
 
-  get erroredOrClosed() {
+  get stopped() {
     return this.#errored || this.#closed
   }
 
