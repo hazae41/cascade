@@ -17,8 +17,11 @@ export class Simplex<W, R = W> {
   #starting = false
   #started = false
 
-  #closing?: { reason?: unknown }
-  #closed?: { reason?: unknown }
+  #closing?: { reason?: never }
+  #closed?: { reason?: never }
+
+  #erroring?: { reason?: unknown }
+  #errored?: { reason?: unknown }
 
   constructor(
     readonly params: SimplexParams<W, R> = {}
@@ -63,6 +66,18 @@ export class Simplex<W, R = W> {
     return this.#closed
   }
 
+  get erroring() {
+    return this.#erroring
+  }
+
+  get errored() {
+    return this.#errored
+  }
+
+  get erroredOrClosed() {
+    return this.#errored || this.#closed
+  }
+
   async #onStart() {
     if (this.#starting)
       return
@@ -70,9 +85,12 @@ export class Simplex<W, R = W> {
 
     try {
       await this.params.start?.call(this)
-    } finally {
-      this.#started = true
+    } catch (e: unknown) {
+      this.error(e)
+      throw e
     }
+
+    this.#started = true
   }
 
   async #onClose() {
@@ -82,35 +100,26 @@ export class Simplex<W, R = W> {
 
     try {
       await this.params.close?.call(this)
-
-      try {
-        this.#reader.close()
-      } catch { }
-
-      try {
-        this.#writer.error()
-      } catch { }
-
-      this.#closed = {}
-    } catch (reason: unknown) {
-      this.#closing = { reason }
-
-      try {
-        this.#reader.error(reason)
-      } catch { }
-
-      try {
-        this.#writer.error(reason)
-      } catch { }
-
-      this.#closed = { reason }
+    } catch (e: unknown) {
+      this.error(e)
+      throw e
     }
+
+    try {
+      this.#reader.close()
+    } catch { }
+
+    try {
+      this.#writer.error()
+    } catch { }
+
+    this.#closed = {}
   }
 
   async #onError(reason?: unknown) {
-    if (this.#closing)
+    if (this.#erroring)
       return
-    this.#closing = { reason }
+    this.#erroring = { reason }
 
     try {
       await this.params.error?.call(this, reason)
@@ -123,23 +132,49 @@ export class Simplex<W, R = W> {
         this.#reader.error(reason)
       } catch { }
 
-      this.#closed = { reason }
+      this.#errored = { reason }
     }
   }
 
   async #onWrite(data: W) {
-    await this.params.write?.call(this, data)
+    try {
+      await this.params.write?.call(this, data)
+    } catch (e: unknown) {
+      this.error(e)
+      throw e
+    }
   }
 
   enqueue(chunk?: R) {
-    this.#reader.enqueue(chunk)
+    try {
+      this.#reader.enqueue(chunk)
+    } catch (e: unknown) {
+      this.error(e)
+      throw e
+    }
   }
 
   error(reason?: unknown) {
+    try {
+      this.#writer.error(reason)
+    } catch { }
+
+    try {
+      this.#reader.error(reason)
+    } catch { }
+
     this.#onError(reason).catch(console.error)
   }
 
   close() {
+    try {
+      this.#reader.close()
+    } catch { }
+
+    try {
+      this.#writer.error()
+    } catch { }
+
     this.#onClose().catch(console.error)
   }
 

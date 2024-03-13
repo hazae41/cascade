@@ -19,8 +19,11 @@ export class FullDuplex<IW, IR = IW, OW = IR, OR = IW> {
   readonly input: Simplex<IW, OR>
   readonly output: Simplex<OW, IR>
 
-  #closing?: { reason?: unknown }
-  #closed?: { reason?: unknown }
+  #closing?: { reason?: never }
+  #closed?: { reason?: never }
+
+  #erroring?: { reason?: unknown }
+  #errored?: { reason?: unknown }
 
   constructor(
     readonly params: FullDuplexParams<IW, IR, OW, OR> = {}
@@ -60,90 +63,96 @@ export class FullDuplex<IW, IR = IW, OW = IR, OR = IW> {
     return this.#closed
   }
 
+  get erroring() {
+    return this.#erroring
+  }
+
+  get errored() {
+    return this.#errored
+  }
+
+  get erroredOrClosed() {
+    return this.#errored || this.#closed
+  }
+
   async #onInputClose() {
-    try {
+    if (!this.output.closing) {
       await this.params.input?.close?.call(this.input)
-    } finally {
-      if (!this.output.closing)
-        return
-
-      if (this.#closing)
-        return
-      this.#closing = {}
-
-      try {
-        await this.params.close?.call(this)
-      } finally {
-        this.#closed = {}
-      }
+      return
     }
+
+    this.#closing = {}
+
+    await this.params.input?.close?.call(this.input)
+    await this.params.close?.call(this)
+
+    this.#closed = {}
   }
 
   async #onOutputClose() {
-    try {
+    if (!this.input.closing) {
       await this.params.output?.close?.call(this.output)
-    } finally {
-      if (!this.input.closing)
-        return
-
-      if (this.#closing)
-        return
-      this.#closing = {}
-
-      try {
-        await this.params.close?.call(this)
-      } finally {
-        this.#closed = {}
-      }
+      return
     }
+
+    this.#closing = {}
+
+    await this.params.output?.close?.call(this.output)
+    await this.params.close?.call(this)
+
+    this.#closed = {}
   }
 
   async #onInputError(reason?: unknown) {
+    if (this.#erroring)
+      return
+    this.#erroring = { reason }
+
     try {
       await this.params.input?.error?.call(this.input, reason)
     } finally {
-      if (this.#closing)
-        return
-      this.#closing = { reason }
-
-      this.output.error(reason)
-
       try {
-        await this.params.error?.call(this, reason)
+        await this.params.output?.error?.call(this.output, reason)
       } finally {
-        this.#closed = { reason }
+        try {
+          await this.params.error?.call(this, reason)
+        } finally {
+          this.output.error(reason)
+          this.#errored = { reason }
+        }
       }
     }
   }
 
   async #onOutputError(reason?: unknown) {
+    if (this.#erroring)
+      return
+    this.#erroring = { reason }
+
     try {
       await this.params.output?.error?.call(this.output, reason)
     } finally {
-      if (this.#closing)
-        return
-      this.#closing = { reason }
-
-      this.input.error(reason)
-
       try {
-        await this.params.error?.call(this, reason)
+        await this.params.input?.error?.call(this.input, reason)
       } finally {
-        this.#closed = { reason }
+        try {
+          await this.params.error?.call(this, reason)
+        } finally {
+          this.input.error(reason)
+          this.#errored = { reason }
+        }
       }
     }
   }
 
   error(reason?: unknown) {
+    this.input.error(reason)
     this.output.error(reason)
   }
 
   close() {
-    try {
-      this.input.close()
-    } finally {
-      this.output.close()
-    }
+    this.input.close()
+    this.output.close()
   }
 
 }
@@ -166,8 +175,11 @@ export class HalfDuplex<IW, IR = IW, OW = IR, OR = IW> {
   readonly input: Simplex<IW, OR>
   readonly output: Simplex<OW, IR>
 
-  #closing?: { reason?: unknown }
-  #closed?: { reason?: unknown }
+  #closing?: { reason?: never }
+  #closed?: { reason?: never }
+
+  #erroring?: { reason?: unknown }
+  #errored?: { reason?: unknown }
 
   constructor(
     readonly params: HalfDuplexParams<IW, IR, OW, OR> = {}
@@ -207,83 +219,93 @@ export class HalfDuplex<IW, IR = IW, OW = IR, OR = IW> {
     return this.#closed
   }
 
+  get erroring() {
+    return this.#erroring
+  }
+
+  get errored() {
+    return this.#errored
+  }
+
+  get erroredOrClosed() {
+    return this.#errored || this.#closed
+  }
+
   async #onInputClose() {
-    try {
-      await this.params.input?.close?.call(this.input)
-    } finally {
-      if (this.#closing)
-        return
-      this.#closing = {}
+    if (this.#closing)
+      return
+    this.#closing = {}
 
-      this.output.close()
+    await this.params.input?.close?.call(this.input)
+    await this.params.output?.close?.call(this.output)
+    await this.params.close?.call(this)
 
-      try {
-        await this.params.close?.call(this)
-      } finally {
-        this.#closed = {}
-      }
-    }
+    this.output.close()
+    this.#closed = {}
   }
 
   async #onOutputClose() {
-    try {
-      await this.params.output?.close?.call(this.output)
-    } finally {
-      if (this.#closing)
-        return
-      this.#closing = {}
+    if (this.#closing)
+      return
+    this.#closing = {}
 
-      this.input.close()
+    await this.params.output?.close?.call(this.output)
+    await this.params.input?.close?.call(this.input)
+    await this.params.close?.call(this)
 
-      try {
-        await this.params.close?.call(this)
-      } finally {
-        this.#closed = {}
-      }
-    }
+    this.input.close()
+    this.#closed = {}
   }
 
   async #onInputError(reason?: unknown) {
+    if (this.#erroring)
+      return
+    this.#erroring = { reason }
+
     try {
       await this.params.input?.error?.call(this.input, reason)
     } finally {
-      if (this.#closing)
-        return
-      this.#closing = { reason }
-
-      this.output.error(reason)
-
       try {
-        await this.params.error?.call(this, reason)
+        await this.params.output?.error?.call(this.output, reason)
       } finally {
-        this.#closed = { reason }
+        try {
+          await this.params.error?.call(this, reason)
+        } finally {
+          this.output.error(reason)
+          this.#errored = { reason }
+        }
       }
     }
   }
 
   async #onOutputError(reason?: unknown) {
+    if (this.#erroring)
+      return
+    this.#erroring = { reason }
+
     try {
       await this.params.output?.error?.call(this.output, reason)
     } finally {
-      if (this.#closing)
-        return
-      this.#closing = { reason }
-
-      this.input.error(reason)
-
       try {
-        await this.params.error?.call(this, reason)
+        await this.params.input?.error?.call(this.input, reason)
       } finally {
-        this.#closed = { reason }
+        try {
+          await this.params.error?.call(this, reason)
+        } finally {
+          this.input.error(reason)
+          this.#errored = { reason }
+        }
       }
     }
   }
 
   error(reason?: unknown) {
+    this.input.error(reason)
     this.output.error(reason)
   }
 
   close() {
+    this.input.close()
     this.output.close()
   }
 
