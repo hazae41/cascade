@@ -5,7 +5,17 @@ export interface FullDuplexParams<IW, IR = IW, OW = IR, OR = IW> {
   readonly input?: SimplexParams<IW, OR>
   readonly output?: SimplexParams<OW, IR>
 
+  /**
+   * Called when both streams are closed
+   * @param this 
+   */
   close?(this: FullDuplex<IW, IR, OW, OR>): Awaitable<void>
+
+  /**
+   * Called when one of the streams is errored
+   * @param this 
+   * @param reason 
+   */
   error?(this: FullDuplex<IW, IR, OW, OR>, reason?: unknown): Awaitable<void>
 }
 
@@ -160,7 +170,17 @@ export interface HalfDuplexParams<IW, IR = IW, OW = IR, OR = IW> {
   readonly input?: SimplexParams<IW, OR>
   readonly output?: SimplexParams<OW, IR>
 
+  /**
+   * Called when one of the streams is closed
+   * @param this 
+   */
   close?(this: HalfDuplex<IW, IR, OW, OR>): Awaitable<void>
+
+  /**
+   * Called when one of the streams is errored
+   * @param this 
+   * @param reason 
+   */
   error?(this: HalfDuplex<IW, IR, OW, OR>, reason?: unknown): Awaitable<void>
 }
 
