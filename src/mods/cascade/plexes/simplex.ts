@@ -148,10 +148,7 @@ export class Simplex<W, R = W> {
   enqueue(chunk?: R) {
     try {
       this.#reader.enqueue(chunk)
-    } catch (e: unknown) {
-      this.error(e)
-      throw e
-    }
+    } catch { }
   }
 
   error(reason?: unknown) {
