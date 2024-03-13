@@ -146,13 +146,12 @@ export class FullDuplex<IW, IR = IW, OW = IR, OR = IW> {
   }
 
   error(reason?: unknown) {
-    this.input.error(reason)
     this.output.error(reason)
   }
 
   close() {
-    this.input.close()
     this.output.close()
+    this.input.close()
   }
 
 }
@@ -300,12 +299,10 @@ export class HalfDuplex<IW, IR = IW, OW = IR, OR = IW> {
   }
 
   error(reason?: unknown) {
-    this.input.error(reason)
     this.output.error(reason)
   }
 
   close() {
-    this.input.close()
     this.output.close()
   }
 
