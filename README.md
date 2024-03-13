@@ -62,8 +62,6 @@ For more complex scenarios, Cascade provides plexes, which are streams with even
 
 A basic in-out stream with events
 
-Depending on how you use it, it can act as both a transform, readable, and writable stream
-
 ```tsx
 const simplex = new Simplex<Uint8Array>()
 
@@ -85,46 +83,63 @@ simplex.readable
  */
 const simplex = new Simplex<Uint8Array>({
   /**
-   * When the simplex is open
+   * When the simplex starts
    */
-  async open() {
+  async start() {
     this.enqueue(new Uint8Array([0, 1, 2]))
   },
   /**
    * When the simplex is closing
    */
-  async flush() {
+  async close() {
     this.enqueue(new Uint8Array([7, 8, 9]))
   },
   /**
-   * When the simplex is closed
-   */
-  async close() {
-    console.log("Closed")
-  },
-  /**
-   * When the simplex is errored
+   * When the simplex is erroring
    */
   async error(error) {
     console.log("Errored", error)
   },
   /**
-   * When the simplex receives a message
+   * When the simplex receives chunks
    */
-  async message(message) {
-    this.enqueue(message)
+  async write(chunk) {
+    /**
+     * Pass the chunk to the readable side
+     */
+    this.enqueue(chunk)
   },
 })
 
 /**
- * You can enqueue it at any time
+ * You can use enqueue at any time
  */
 simplex.enqueue(new Uint8Array([4, 5, 6]))
 
 /**
- * You can close it at any time
+ * You can use error at any time
+ */
+simplex.error(new Error())
+
+/**
+ * You can use close at any time
  */
 simplex.close()
+
+/**
+ * You can check if it's closed
+ */
+simplex.closed
+
+/**
+ * You can check if it's errored
+ */
+simplex.errored
+
+/**
+ * You can check if it's closed or errored
+ */
+simplex.stopped
 ```
 
 #### Full-Duplex
