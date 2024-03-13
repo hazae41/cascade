@@ -137,6 +137,11 @@ export class Simplex<W, R = W> {
   }
 
   async #onWrite(data: W) {
+    if (this.params.write == null) {
+      this.enqueue(data as any as R)
+      return
+    }
+
     try {
       await this.params.write?.call(this, data)
     } catch (e: unknown) {
