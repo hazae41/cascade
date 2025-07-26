@@ -1,5 +1,5 @@
 import { Awaitable } from "libs/promises/index.js"
-import { Simplex, SimplexParams } from "./simplex.js"
+import { Simplex, SimplexParams } from "../simplex/index.js"
 
 export interface FullDuplexParams<IW, IR = IW, OW = IR, OR = IW> {
   readonly input?: SimplexParams<IW, OR>

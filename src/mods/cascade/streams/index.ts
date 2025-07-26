@@ -1,3 +1,4 @@
-export * from "./readable.js";
-export * from "./transform.js";
-export * from "./writable.js";
+export * from "./readable/index.js";
+export * from "./transform/index.js";
+export * from "./writable/index.js";
+

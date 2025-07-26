@@ -1,2 +1,3 @@
-export * from "./duplex.js"
-export * from "./simplex.js"
+export * from "./duplex/index.js"
+export * from "./simplex/index.js"
+

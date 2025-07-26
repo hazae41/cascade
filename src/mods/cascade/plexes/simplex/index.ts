@@ -1,6 +1,6 @@
 import { Awaitable } from "libs/promises/index.js"
-import { SuperReadableStream } from "../streams/readable.js"
-import { SuperWritableStream } from "../streams/writable.js"
+import { SuperReadableStream } from "../../streams/readable/index.js"
+import { SuperWritableStream } from "../../streams/writable/index.js"
 
 export interface SimplexParams<W, R = W> {
   /**
