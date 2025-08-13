@@ -24,12 +24,12 @@
   "devDependencies": {
     "@hazae41/phobos": "^1.0.10",
     "@hazae41/rimraf": "^1.0.1",
-    "@rollup/plugin-typescript": "^11.1.6",
-    "@types/node": "^20.11.25",
-    "rollup": "^4.12.1",
-    "rollup-plugin-dts": "^6.1.0",
-    "rollup-plugin-node-externals": "^7.0.1",
-    "typescript": "^5.4.2"
+    "@rollup/plugin-typescript": "^12.1.4",
+    "@types/node": "^24.2.1",
+    "rollup": "^4.46.2",
+    "rollup-plugin-dts": "^6.2.1",
+    "rollup-plugin-node-externals": "^8.0.1",
+    "typescript": "^5.9.2"
   },
   "exports": {
     ".": {
